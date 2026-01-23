@@ -12,7 +12,7 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 
-  // Aiven requires TLS
+
   ssl: isProd ? { rejectUnauthorized: false } : undefined,
 });
 
