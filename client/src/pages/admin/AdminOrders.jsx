@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const STATUSES = ["RECEIVED", "PREPARING", "PICKED", "DISPATCHED", "ARRIVED"];
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState([]);
@@ -10,43 +12,50 @@ export default function AdminOrders() {
     const [openOrder, setOpenOrder] = useState(null);
     const [orderItems, setOrderItems] = useState([]);
     const [itemsLoading, setItemsLoading] = useState(false);
-
+    const dashBtn = {
+        padding: "6px 12px",
+        borderRadius: "8px",
+        border: "none",
+        background: "#222",
+        color: "#fff",
+        cursor: "pointer",
+    };
 
     const adminKey = localStorage.getItem("HB_ADMIN_KEY") || "";
 
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const res = await fetch("http://localhost:5000/api/admin/orders", {
+            const res = await fetch(`${API_BASE}/api/admin/orders`, {
                 headers: { "x-admin-key": adminKey },
             });
             const data = await res.json();
+
             if (!res.ok) {
                 alert(data.message || "Unauthorized");
                 if (res.status === 401) navigate("/admin");
-                setLoading(false);
                 return;
             }
             setOrders(data);
-        } catch (e) {
+        } catch {
             alert("Server not reachable");
         } finally {
             setLoading(false);
         }
     };
+
     const fetchItems = async (orderCode) => {
         setItemsLoading(true);
         try {
-            const res = await fetch(
-                `http://localhost:5000/api/admin/orders/${orderCode}/items`,
-                { headers: { "x-admin-key": adminKey } }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/orders/${orderCode}/items`, {
+                headers: { "x-admin-key": adminKey },
+            });
             const data = await res.json();
             if (!res.ok) return alert(data.message || "Failed to load items");
 
             setOrderItems(data.items || []);
             setOpenOrder(orderCode);
-        } catch (e) {
+        } catch {
             alert("Server not reachable");
         } finally {
             setItemsLoading(false);
@@ -55,25 +64,24 @@ export default function AdminOrders() {
 
     const updateStatus = async (orderCode, status) => {
         try {
-            const res = await fetch(
-                `http://localhost:5000/api/admin/orders/${orderCode}/status`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "x-admin-key": adminKey,
-                    },
-                    body: JSON.stringify({ status }),
-                }
-            );
+            const res = await fetch(`${API_BASE}/api/admin/orders/${orderCode}/status`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-admin-key": adminKey,
+                },
+                body: JSON.stringify({ status }),
+            });
+
             const data = await res.json();
             if (!res.ok) return alert(data.message || "Update failed");
 
-            // update UI instantly
             setOrders((prev) =>
-                prev.map((o) => (o.order_code === orderCode ? { ...o, order_status: status } : o))
+                prev.map((o) =>
+                    o.order_code === orderCode ? { ...o, order_status: status } : o
+                )
             );
-        } catch (e) {
+        } catch {
             alert("Update failed (server issue)");
         }
     };
@@ -84,6 +92,7 @@ export default function AdminOrders() {
         // eslint-disable-next-line
     }, []);
 
+    // ✅ keep rest of your UI same
     return (
         <div style={{ padding: 16, maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
@@ -103,27 +112,27 @@ export default function AdminOrders() {
                         Logout
                     </button>
                     <div
-  style={{
-    display: "flex",
-    gap: 12,
-    marginBottom: 16,
-    flexWrap: "wrap",
-  }}
->
-  <button
-    onClick={() => navigate("/admin/orders")}
-    style={dashBtn}
-  >
-    📦 Orders
-  </button>
+                        style={{
+                            display: "flex",
+                            gap: 12,
+                            marginBottom: 16,
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <button
+                            onClick={() => navigate("/admin/orders")}
+                            style={dashBtn}
+                        >
+                            📦 Orders
+                        </button>
 
-  <button
-    onClick={() => navigate("/admin/products")}
-    style={dashBtn}
-  >
-    🥗 Products
-  </button>
-</div>
+                        <button
+                            onClick={() => navigate("/admin/products")}
+                            style={dashBtn}
+                        >
+                            🥗 Products
+                        </button>
+                    </div>
 
                 </div>
             </div>
@@ -217,14 +226,17 @@ export default function AdminOrders() {
                                                 >
                                                     {it.image ? (
                                                         <img
-                                                            src={it.image}
-                                                            alt={it.product_name}
+                                                            src={it.image.startsWith("/uploads") ? `${API_BASE}${it.image}` : it.image}
+                                                            alt={it.name}
                                                             style={{
                                                                 width: 54,
                                                                 height: 44,
                                                                 borderRadius: 10,
                                                                 objectFit: "cover",
                                                                 background: "#fff",
+                                                            }}
+                                                            onError={(e) => {
+                                                                e.currentTarget.src = "/assets/images/salad1.png";
                                                             }}
                                                         />
                                                     ) : (
@@ -240,7 +252,7 @@ export default function AdminOrders() {
 
                                                     <div style={{ flex: 1 }}>
                                                         <div style={{ fontWeight: 900, fontSize: 13 }}>
-                                                            {it.product_name}
+                                                            {it.name}
                                                         </div>
                                                         <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
                                                             ₹{it.price} × {it.qty}
@@ -248,6 +260,7 @@ export default function AdminOrders() {
                                                     </div>
 
                                                     <div style={{ fontWeight: 900 }}>₹{it.price * it.qty}</div>
+
                                                 </div>
                                             ))}
                                         </div>

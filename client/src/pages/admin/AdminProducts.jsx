@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
 
 const CATEGORIES = ["Veg", "Non-Veg", "Vegan", "Lactose-Free"];
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 export default function AdminProducts() {
-  const adminKey = localStorage.getItem("HB_ADMIN_KEY");
+  const navigate = useNavigate();
+  const adminKey = localStorage.getItem("HB_ADMIN_KEY") || "";
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -15,27 +18,40 @@ export default function AdminProducts() {
     price: "",
     category: "Veg",
     tags: "",
-    image: "",
     stock_qty: 0,
     is_active: 1,
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+
+  useEffect(() => {
+    if (!adminKey) navigate("/admin");
+    else fetchProducts();
+    // eslint-disable-next-line
+  }, []);
+
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/products", {
+      const res = await fetch(`${API_BASE}/api/admin/products`, {
         headers: { "x-admin-key": adminKey },
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Failed to load products");
+        if (res.status === 401) navigate("/admin");
+        return;
+      }
+
       setProducts(Array.isArray(data) ? data : []);
+    } catch {
+      alert("Server not reachable");
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
 
   const resetForm = () => {
     setEditing(null);
@@ -44,61 +60,99 @@ export default function AdminProducts() {
       price: "",
       category: "Veg",
       tags: "",
-      image: "",
       stock_qty: 0,
       is_active: 1,
     });
+    setImageFile(null);
+    setImagePreview("");
   };
 
   const submit = async () => {
     if (!form.name || !form.price) return alert("Name + Price required");
 
     const url = editing
-      ? `http://localhost:5000/api/admin/products/${editing}`
-      : `http://localhost:5000/api/admin/products`;
+      ? `${API_BASE}/api/admin/products/${editing}`
+      : `${API_BASE}/api/admin/products`;
 
     const method = editing ? "PUT" : "POST";
 
-    await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": adminKey,
-      },
-      body: JSON.stringify(form),
-    });
+    const fd = new FormData();
+    fd.append("name", form.name);
+    fd.append("price", form.price);
+    fd.append("category", form.category);
+    fd.append("tags", form.tags || "");
+    fd.append("stock_qty", String(form.stock_qty || 0));
+    fd.append("is_active", String(form.is_active ?? 1));
+    if (imageFile) fd.append("image", imageFile);
 
-    resetForm();
-    fetchProducts();
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "x-admin-key": adminKey }, // ✅ don't set content-type for FormData
+        body: fd,
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        alert(data.message || "Save failed");
+        if (res.status === 401) navigate("/admin");
+        return;
+      }
+
+      resetForm();
+      fetchProducts();
+    } catch {
+      alert("Server not reachable");
+    }
   };
 
   const toggle = async (id) => {
-    await fetch(`http://localhost:5000/api/admin/products/${id}/toggle`, {
-      method: "PATCH",
-      headers: { "x-admin-key": adminKey },
-    });
-    fetchProducts();
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products/${id}/toggle`, {
+        method: "PATCH",
+        headers: { "x-admin-key": adminKey },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return alert(data.message || "Toggle failed");
+      fetchProducts();
+    } catch {
+      alert("Server not reachable");
+    }
   };
 
   const updateStock = async (id, stock_qty) => {
-    await fetch(`http://localhost:5000/api/admin/products/${id}/stock`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": adminKey,
-      },
-      body: JSON.stringify({ stock_qty }),
-    });
-    fetchProducts();
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products/${id}/stock`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({ stock_qty }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return alert(data.message || "Stock update failed");
+      fetchProducts();
+    } catch {
+      alert("Server not reachable");
+    }
   };
 
   const del = async (id) => {
     if (!confirm("Delete product?")) return;
-    await fetch(`http://localhost:5000/api/admin/products/${id}`, {
-      method: "DELETE",
-      headers: { "x-admin-key": adminKey },
-    });
-    fetchProducts();
+
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-key": adminKey },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return alert(data.message || "Delete failed");
+      fetchProducts();
+    } catch {
+      alert("Server not reachable");
+    }
   };
 
   const startEdit = (p) => {
@@ -108,11 +162,28 @@ export default function AdminProducts() {
       price: p.price || "",
       category: p.category || "Veg",
       tags: p.tags || "",
-      image: p.image || "",
       stock_qty: p.stock_qty || 0,
       is_active: p.is_active ?? 1,
     });
+
+    setImageFile(null);
+    setImagePreview(p.image_url || p.image || "");
+
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const onPickImage = (file) => {
+    setImageFile(file || null);
+    if (!file) return setImagePreview("");
+
+    // optional: show warning if huge
+    if (file.size > 20 * 1024 * 1024) {
+      alert("Image is too large. Max 20MB.");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setImagePreview(url);
   };
 
   return (
@@ -121,7 +192,7 @@ export default function AdminProducts() {
       <div className="container" style={{ maxWidth: 900 }}>
         <h2 style={{ margin: 0 }}>Admin Products</h2>
         <p style={{ marginTop: 6, color: "#555" }}>
-          Add / Edit salads + Stock + Sold Out
+          Add / Edit products + Image Upload + Stock + Sold Out
         </p>
 
         {/* Form */}
@@ -163,10 +234,11 @@ export default function AdminProducts() {
 
             <input
               className="input"
-              placeholder="Image URL"
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              onChange={(e) => onPickImage(e.target.files?.[0])}
             />
+
             <input
               className="input"
               placeholder="Stock Qty"
@@ -176,6 +248,22 @@ export default function AdminProducts() {
               }
             />
           </div>
+
+          {imagePreview ? (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontWeight: 800, marginBottom: 6 }}>Preview</div>
+              <img
+                src={imagePreview}
+                alt="preview"
+                style={{ width: 220, height: 140, borderRadius: 14, objectFit: "cover" }}
+              />
+              <div style={{ fontSize: 12, color: "#777", marginTop: 6 }}>
+                {editing
+                  ? "Upload new image only if you want to replace the old one."
+                  : "This image will be stored on the server (no URL)."}
+              </div>
+            </div>
+          ) : null}
 
           <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
             <button className="btn" onClick={submit}>
@@ -198,12 +286,13 @@ export default function AdminProducts() {
           <div style={{ display: "grid", gap: 12 }}>
             {products.map((p) => {
               const soldOut = (p.stock_qty ?? 0) <= 0 || (p.is_active ?? 1) === 0;
+              const imgSrc = p.image_url || p.image || "/assets/images/salad1.png";
 
               return (
                 <div key={p.id} className="card" style={{ padding: 12 }}>
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <img
-                      src={p.image || "/assets/images/salad1.png"}
+                      src={imgSrc}
                       alt={p.name}
                       style={{ width: 70, height: 55, borderRadius: 12, objectFit: "cover" }}
                     />
@@ -222,34 +311,37 @@ export default function AdminProducts() {
                         {p.tags ? <span className="chip">{p.tags}</span> : null}
                         {soldOut ? <span className="chip danger">Sold Out</span> : null}
                       </div>
-
-                      {/* Quick stock */}
-                      <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                        <button className="miniBtn" onClick={() => updateStock(p.id, (p.stock_qty || 0) + 5)}>
-                          +5 Stock
-                        </button>
-                        <button className="miniBtn" onClick={() => updateStock(p.id, Math.max(0, (p.stock_qty || 0) - 1))}>
-                          -1 Stock
-                        </button>
-                        <button className="miniBtn" onClick={() => toggle(p.id)}>
-                          Toggle Active
-                        </button>
-                        <button className="miniBtn" onClick={() => startEdit(p)}>
-                          Edit
-                        </button>
-                        <button className="miniBtn dangerBtn" onClick={() => del(p.id)}>
-                          Delete
-                        </button>
-                      </div>
                     </div>
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    <button className="btn" onClick={() => startEdit(p)}>
+                      Edit ✏️
+                    </button>
+
+                    <button className="btn" style={{ background: "#111" }} onClick={() => toggle(p.id)}>
+                      Toggle Active
+                    </button>
+
+                    <button className="btn" style={{ background: "#E74C3C" }} onClick={() => del(p.id)}>
+                      Delete 🗑️
+                    </button>
+
+                    <button
+                      className="btn"
+                      style={{ background: "#555" }}
+                      onClick={() => {
+                        const val = prompt("Enter stock qty:", String(p.stock_qty ?? 0));
+                        if (val === null) return;
+                        updateStock(p.id, Number(val || 0));
+                      }}
+                    >
+                      Update Stock
+                    </button>
                   </div>
                 </div>
               );
             })}
-
-            {products.length === 0 && !loading && (
-              <div style={{ color: "#777" }}>No products yet. Add your first salad ✅</div>
-            )}
           </div>
         </div>
       </div>

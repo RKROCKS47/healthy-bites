@@ -1,6 +1,8 @@
 require("dotenv").config();
 
 const express = require("express");
+const path = require("path");
+const fs = require("fs");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -16,11 +18,20 @@ const app = express();
 // middleware
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
     credentials: true,
   })
 );
 app.use(express.json());
+
+// ✅ serve uploaded images from: server/uploads
+const UPLOAD_DIR = path.join(__dirname, "uploads");
+const PRODUCT_UPLOAD_DIR = path.join(UPLOAD_DIR, "products");
+
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+if (!fs.existsSync(PRODUCT_UPLOAD_DIR)) fs.mkdirSync(PRODUCT_UPLOAD_DIR, { recursive: true });
+
+app.use("/uploads", express.static(UPLOAD_DIR));
 
 // test routes
 app.get("/", (req, res) => res.send("Healthy Bites API running ✅"));
@@ -40,7 +51,10 @@ app.use("/api/admin", adminProductRoutes);
 // socket
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "http://localhost:5173", credentials: true },
+  cors: {
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
+  },
 });
 
 io.on("connection", (socket) => {

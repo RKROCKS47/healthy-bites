@@ -3,6 +3,7 @@ import { useCart } from "../context/CartContext";
 import { useEffect, useMemo, useState } from "react";
 
 const CATEGORIES = ["All", "Veg", "Non-Veg", "Vegan", "Lactose-Free"];
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
 
 export default function Menu() {
   const { addToCart } = useCart();
@@ -18,7 +19,7 @@ export default function Menu() {
 
   // fetch products
   useEffect(() => {
-    fetch("http://localhost:5000/api/products")
+    fetch(`${API_BASE}/api/products`)
       .then((r) => r.json())
       .then(setProducts)
       .catch(() => {});
@@ -26,7 +27,7 @@ export default function Menu() {
 
   // fetch rating stats
   useEffect(() => {
-    fetch("http://localhost:5000/api/reviews/stats/average")
+    fetch(`${API_BASE}/api/reviews/stats/average`)
       .then((r) => r.json())
       .then(setRatingStats)
       .catch(() => {});
@@ -63,15 +64,12 @@ export default function Menu() {
         {/* Products */}
         <div className="grid">
           {filtered.map((p) => {
-            const soldOut = p.stock_qty <= 0;
+            const soldOut = p.sold_out ?? (p.stock_qty <= 0);
+            const imgSrc = p.image_url || p.image || "/assets/images/salad1.png";
 
             return (
               <div key={p.id} className="card">
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="card-img"
-                />
+                <img src={imgSrc} alt={p.name} className="card-img" />
 
                 <div className="card-body">
                   <div className="row">
@@ -91,12 +89,8 @@ export default function Menu() {
 
                   <div className="chips">
                     <span className="chip">{p.category}</span>
-                    {p.tags && (
-                      <span className="chip">{p.tags}</span>
-                    )}
-                    {soldOut && (
-                      <span className="chip danger">Sold Out</span>
-                    )}
+                    {p.tags && <span className="chip">{p.tags}</span>}
+                    {soldOut && <span className="chip danger">Sold Out</span>}
                   </div>
 
                   <button
@@ -106,7 +100,7 @@ export default function Menu() {
                         id: p.id,
                         name: p.name,
                         price: p.price,
-                        image: p.image,
+                        image: imgSrc,
                       })
                     }
                     className={soldOut ? "btn disabled" : "btn"}

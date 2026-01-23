@@ -1,22 +1,13 @@
 const mysql = require("mysql2");
 
 const pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "healthy_bites",
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "healthy_bites",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
 
-// test connection
-pool.query("SELECT 1", (err) => {
-  if (err) {
-    console.error("❌ MySQL connection error:", err.message);
-  } else {
-    console.log("✅ MySQL connected successfully");
-  }
-});
-
-module.exports = pool;
+module.exports = pool; // ✅ IMPORTANT: no .promise()
