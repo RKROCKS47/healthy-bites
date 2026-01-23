@@ -23,6 +23,10 @@ app.use(
   })
 );
 app.use(express.json());
+app.get("/api/health", (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() });
+});
+
 
 // ✅ serve uploaded images from: server/uploads
 const UPLOAD_DIR = path.join(__dirname, "uploads");
