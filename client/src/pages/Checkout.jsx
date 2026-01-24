@@ -38,9 +38,10 @@ export default function Checkout() {
   useEffect(() => {
     setForm((prev) => ({
       ...prev,
-      phone: prev.phone.replace(/[^\d]/g, "").slice(0, 10),
-      pincode: prev.pincode.replace(/[^\d]/g, "").slice(0, 6),
+      phone: (prev.phone || "").replace(/[^\d]/g, "").slice(0, 10),
+      pincode: (prev.pincode || "").replace(/[^\d]/g, "").slice(0, 6),
     }));
+    // eslint-disable-next-line
   }, [form.phone, form.pincode]);
 
   const placeOrder = async () => {
@@ -51,32 +52,32 @@ export default function Checkout() {
 
     setPlacing(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_BASE;  const res = await fetch(`${API_BASE}/api/orders`, {
+      const payload = {
+        customer: form,
+        items,
+        totals,
+        paymentMethod,
+        paymentStatus: "PENDING",
+      };
+
+      const res = await fetch(`${API_BASE}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload){
-          customer: form,
-          items,
-          totals,
-          paymentMethod: paymentMethod,
-          paymentStatus: paymentMethod === "COD" ? "PENDING" : "PENDING",
-        }),
+        body: JSON.stringify(payload), // ✅ FIXED
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         alert(data.message || "Order failed");
-        setPlacing(false);
         return;
       }
 
       clearCart();
       setPlacedOrderCode(data.orderCode);
-
     } catch (err) {
       console.error(err);
-      alert("Server not reachable. Make sure backend is running.");
+      alert("Server not reachable. Please try again.");
     } finally {
       setPlacing(false);
     }
@@ -85,45 +86,45 @@ export default function Checkout() {
   return (
     <>
       <Navbar />
+
       {placedOrderCode ? (
-  <div className="container">
-    <div className="card section" style={{ padding: 16 }}>
-      <h2 style={{ marginTop: 0 }}>Order Placed ✅</h2>
+        <div className="container">
+          <div className="card section" style={{ padding: 16 }}>
+            <h2 style={{ marginTop: 0 }}>Order Placed ✅</h2>
 
-      <p style={{ margin: "10px 0", fontWeight: 900 }}>
-        Your Order ID:
-        <span style={{ marginLeft: 8, color: "#2ECC71" }}>
-          {placedOrderCode}
-        </span>
-      </p>
+            <p style={{ margin: "10px 0", fontWeight: 900 }}>
+              Your Order ID:
+              <span style={{ marginLeft: 8, color: "#2ECC71" }}>
+                {placedOrderCode}
+              </span>
+            </p>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-        <button
-          className="btn"
-          onClick={() => {
-            navigator.clipboard.writeText(placedOrderCode);
-            alert("Order ID copied ✅");
-          }}
-        >
-          Copy Order ID 📋
-        </button>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
+              <button
+                className="btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(placedOrderCode);
+                  alert("Order ID copied ✅");
+                }}
+              >
+                Copy Order ID 📋
+              </button>
 
-        <button
-          className="btn"
-          style={{ background: "#111" }}
-          onClick={() => (window.location.href = `/track?order=${placedOrderCode}`)}
-        >
-          Track Order 🚚
-        </button>
-      </div>
+              <button
+                className="btn"
+                style={{ background: "#111" }}
+                onClick={() => (window.location.href = `/track?order=${placedOrderCode}`)}
+              >
+                Track Order 🚚
+              </button>
+            </div>
 
-      <p style={{ marginTop: 12, color: "#666", fontSize: 13 }}>
-        Keep this Order ID safe. You can track your order anytime from Track Order page.
-      </p>
-    </div>
-  </div>
-) : null}
-
+            <p style={{ marginTop: 12, color: "#666", fontSize: 13 }}>
+              Keep this Order ID safe. You can track your order anytime from Track Order page.
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="container">
         <h2 style={{ margin: 0 }}>Checkout</h2>
@@ -285,6 +286,9 @@ export default function Checkout() {
                         height: 48,
                         borderRadius: 12,
                         objectFit: "cover",
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.src = "/assets/images/salad1.png";
                       }}
                     />
                     <div>
