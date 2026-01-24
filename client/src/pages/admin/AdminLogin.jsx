@@ -7,7 +7,7 @@ export default function AdminLogin() {
 
   const login = () => {
     if (!key.trim()) return alert("Enter admin key");
-    localStorage.setItem("HB_ADMIN_KEY", key.trim());
+    localStorage.setItem("ADMIN_KEY", adminKeyInput);
     navigate("/admin/orders");
   };
 
