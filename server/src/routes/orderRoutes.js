@@ -9,17 +9,23 @@ router.get("/track/:orderCode", (req, res) => {
   const { orderCode } = req.params;
 
   db.query(
-    `SELECT order_code, customer_name, order_status, payment_method,
-            payment_status, updated_at
+    `SELECT
+        order_code,
+        customer_name,
+        status AS order_status,
+        payment_method,
+        payment_status,
+        created_at
      FROM orders
      WHERE order_code = ?
      LIMIT 1`,
     [orderCode],
     (err, rows) => {
       if (err) {
-        return res.status(500).json({ message: "DB error" });
+        console.error("TRACK ORDER DB ERROR:", err);
+        return res.status(500).json({ message: err.message, code: err.code });
       }
-      if (!rows.length) {
+      if (!rows || rows.length === 0) {
         return res.status(404).json({ message: "Order not found" });
       }
       res.json(rows[0]);
@@ -37,68 +43,91 @@ function generateOrderCode() {
 router.post("/", (req, res) => {
   const { customer, items, totals, paymentMethod, paymentStatus } = req.body;
 
-  if (!customer || !items?.length) {
+  if (!customer || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: "Invalid order data" });
   }
 
   const orderCode = generateOrderCode();
 
+  // ✅ Build address string for your DB column "address"
+  const addressText = [
+    customer.addressLine,
+    customer.area,
+    customer.city ? `City: ${customer.city}` : null,
+    customer.pincode ? `Pincode: ${customer.pincode}` : null,
+    customer.instructions ? `Note: ${customer.instructions}` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const totalAmount =
+    Number(totals?.total ?? totals?.grandTotal ?? totals?.amount ?? 0) || 0;
+
+  const city = customer.city || null;
+  const pincode = customer.pincode || null;
+
+  // ✅ Insert order using YOUR real columns
   db.query(
     `INSERT INTO orders
-     (order_code, customer_name, phone, email, address_line, area, city, pincode,
-      instructions, payment_method, payment_status, order_status,
-      subtotal, delivery_fee, total)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', ?, ?, ?)`,
+      (order_code, customer_name, phone, address, city, pincode,
+       payment_method, payment_status, status, total_amount)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', ?)`,
     [
       orderCode,
       customer.fullName,
       customer.phone,
-      customer.email || null,
-      customer.addressLine,
-      customer.area,
-      customer.city,
-      customer.pincode,
-      customer.instructions || null,
-      paymentMethod,
-      paymentStatus,
-      totals.subtotal,
-      totals.deliveryFee,
-      totals.total,
+      addressText,
+      city,
+      pincode,
+      paymentMethod || "COD",
+      paymentStatus || "PENDING",
+      totalAmount,
     ],
-    (err, result) => {
+    (err) => {
       if (err) {
-        return res.status(500).json({ message: "Order save failed" });
+        console.error("ORDER INSERT DB ERROR:", err);
+        return res.status(500).json({
+          message: "Order save failed",
+          error: err.message,
+          code: err.code,
+        });
       }
 
-      const orderId = result.insertId;
-
+      // ✅ Store items by order_code (NO order_id needed)
       const values = items.map((i) => [
-        orderId,
+        orderCode,
         i.name,
-        i.price,
-        i.qty,
-        i.image,
+        Number(i.price || 0),
+        Number(i.qty || 1),
+        i.image || null,
       ]);
 
       db.query(
-        `INSERT INTO order_items (order_id, name, price, qty, image)
+        `INSERT INTO order_items (order_code, name, price, qty, image)
          VALUES ?`,
         [values],
         (err2) => {
           if (err2) {
-            return res.status(500).json({ message: "Order items failed" });
+            console.error("ORDER ITEMS DB ERROR:", err2);
+            return res.status(500).json({
+              message: "Order items failed",
+              error: err2.message,
+              code: err2.code,
+            });
           }
 
-          // 🔻 reduce stock
+          // 🔻 reduce stock (best-effort)
           items.forEach((i) => {
+            if (!i?.id) return;
             db.query(
-              "UPDATE products SET stock_qty = stock_qty - ? WHERE id = ?",
-              [i.qty, i.id]
+              "UPDATE products SET stock_qty = GREATEST(stock_qty - ?, 0) WHERE id = ?",
+              [Number(i.qty || 1), i.id],
+              () => {}
             );
           });
 
-          res.json({
-            message: "Order placed successfully",
+          return res.json({
+            message: "Order placed successfully ✅",
             orderCode,
           });
         }
