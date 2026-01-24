@@ -9,7 +9,6 @@ const { requireAdmin } = require("../middlewares/adminMiddleware");
 
 // ✅ Save uploads inside: server/uploads/products
 const UPLOAD_DIR = path.join(__dirname, "..", "..", "uploads", "products");
-
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 // ✅ Multer config (bigger + safe)
@@ -25,7 +24,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // ✅ 20MB (so no "File too large")
+  limits: { fileSize: 20 * 1024 * 1024 }, // ✅ 20MB
   fileFilter: (req, file, cb) => {
     const ok = ["image/png", "image/jpeg", "image/jpg", "image/webp"].includes(file.mimetype);
     cb(ok ? null : new Error("Only png/jpg/jpeg/webp images allowed"), ok);
@@ -40,22 +39,31 @@ const uploadSingle = (req, res, next) => {
   });
 };
 
+function getBaseUrl(req) {
+  const proto = (req.headers["x-forwarded-proto"] || "https")
+    .split(",")[0]
+    .trim();
+  return `${proto}://${req.get("host")}`;
+}
+
 // ✅ attach full image URL
 function withImageUrl(req, row) {
   const r = { ...row };
+  const baseUrl = getBaseUrl(req);
+
   if (r.image && typeof r.image === "string" && r.image.startsWith("/uploads/")) {
-    r.image_url = `${req.protocol}://${req.get("host")}${r.image}`;
+    r.image_url = `${baseUrl}${r.image}`; // ✅ always https on Render
   } else {
     r.image_url = r.image || null;
   }
+
   r.sold_out = Number(r.stock_qty || 0) <= 0;
   return r;
 }
 
 /**
  * ✅ ADMIN PRODUCTS CRUD
- * Mounted at: /api/admin  (from server.js)
- * So routes become:
+ * Mounted at: /api/admin
  * GET    /api/admin/products
  * POST   /api/admin/products
  * PUT    /api/admin/products/:id
@@ -80,7 +88,6 @@ router.post("/products", requireAdmin, uploadSingle, (req, res) => {
     return res.status(400).json({ message: "Missing fields: name, price, category" });
   }
 
-  // ✅ stored relative path
   const imagePath = req.file ? `/uploads/products/${req.file.filename}` : null;
 
   db.query(
