@@ -172,7 +172,7 @@ export default function AdminProducts() {
 
     // ✅ FIX: always resolve correct URL for preview (backend prefix if /uploads)
     const raw = p.image_url || p.image || "";
-    setImagePreview(resolveImg(raw));
+    setImagePreview(resolveImg(raw) + `?v=${Date.now()}`);
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -295,7 +295,7 @@ export default function AdminProducts() {
               const soldOut = (p.stock_qty ?? 0) <= 0 || (p.is_active ?? 1) === 0;
 
               const raw = p.image_url || p.image || "";
-              const imgSrc = resolveImg(raw);
+              const imgSrc = resolveImg(raw) + `?v=${p.updated_at || Date.now()}`;
 
               return (
                 <div key={p.id} className="card" style={{ padding: 12 }}>
