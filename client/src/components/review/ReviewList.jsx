@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-
+import { API_BASE } from "../../utils/apiBase";
 export default function ReviewList() {
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/reviews")
+  fetch(`${API_BASE}/api/reviews`)
       .then((r) => r.json())
       .then(setReviews);
   }, []);
