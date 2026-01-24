@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/common/Navbar";
+import { adminFetch } from "../../utils/adminFetch";
 
 const CATEGORIES = ["Veg", "Non-Veg", "Vegan", "Lactose-Free"];
-const API = import.meta.env.VITE_API_BASE;
 
 export default function AdminProducts() {
   const navigate = useNavigate();
@@ -24,26 +24,24 @@ export default function AdminProducts() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
 
-  // Always get latest admin key (important)
-  const getAdminKey = () => localStorage.getItem("ADMIN_KEY");
+  const requireAdmin = () => {
+    const k = localStorage.getItem("ADMIN_KEY");
+    if (!k) {
+      navigate("/admin");
+      return false;
+    }
+    return true;
+  };
 
   useEffect(() => {
-    const k = getAdminKey();
-    if (!k) navigate("/admin");
-    else fetchProducts();
+    if (requireAdmin()) fetchProducts();
     // eslint-disable-next-line
   }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const adminKey = getAdminKey();
-      if (!adminKey) return navigate("/admin");
-
-      const res = await fetch(`${API}/api/admin/products`, {
-        headers: { "x-admin-key": adminKey },
-      });
-
+      const res = await adminFetch("/api/admin/products");
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -75,14 +73,12 @@ export default function AdminProducts() {
   };
 
   const submit = async () => {
+    if (!requireAdmin()) return;
     if (!form.name || !form.price) return alert("Name + Price required");
 
-    const adminKey = getAdminKey();
-    if (!adminKey) return navigate("/admin");
-
-    const url = editing
-      ? `${API}/api/admin/products/${editing}`
-      : `${API}/api/admin/products`;
+    const path = editing
+      ? `/api/admin/products/${editing}`
+      : `/api/admin/products`;
 
     const method = editing ? "PUT" : "POST";
 
@@ -96,10 +92,9 @@ export default function AdminProducts() {
     if (imageFile) fd.append("image", imageFile);
 
     try {
-      const res = await fetch(url, {
+      const res = await adminFetch(path, {
         method,
-        headers: { "x-admin-key": adminKey }, // ✅ don't set Content-Type for FormData
-        body: fd,
+        body: fd, // ✅ no Content-Type for FormData
       });
 
       const data = await res.json().catch(() => ({}));
@@ -118,13 +113,11 @@ export default function AdminProducts() {
   };
 
   const toggle = async (id) => {
-    const adminKey = getAdminKey();
-    if (!adminKey) return navigate("/admin");
+    if (!requireAdmin()) return;
 
     try {
-      const res = await fetch(`${API}/api/admin/products/${id}/toggle`, {
+      const res = await adminFetch(`/api/admin/products/${id}/toggle`, {
         method: "PATCH",
-        headers: { "x-admin-key": adminKey },
       });
 
       const data = await res.json().catch(() => ({}));
@@ -137,16 +130,12 @@ export default function AdminProducts() {
   };
 
   const updateStock = async (id, stock_qty) => {
-    const adminKey = getAdminKey();
-    if (!adminKey) return navigate("/admin");
+    if (!requireAdmin()) return;
 
     try {
-      const res = await fetch(`${API}/api/admin/products/${id}/stock`, {
+      const res = await adminFetch(`/api/admin/products/${id}/stock`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-key": adminKey,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stock_qty }),
       });
 
@@ -160,15 +149,13 @@ export default function AdminProducts() {
   };
 
   const del = async (id) => {
-    const adminKey = getAdminKey();
-    if (!adminKey) return navigate("/admin");
+    if (!requireAdmin()) return;
 
     if (!confirm("Delete product?")) return;
 
     try {
-      const res = await fetch(`${API}/api/admin/products/${id}`, {
+      const res = await adminFetch(`/api/admin/products/${id}`, {
         method: "DELETE",
-        headers: { "x-admin-key": adminKey },
       });
 
       const data = await res.json().catch(() => ({}));
@@ -201,7 +188,6 @@ export default function AdminProducts() {
     setImageFile(file || null);
     if (!file) return setImagePreview("");
 
-    // optional: show warning if huge
     if (file.size > 20 * 1024 * 1024) {
       alert("Image is too large. Max 20MB.");
       return;
@@ -226,7 +212,10 @@ export default function AdminProducts() {
             {editing ? "Edit Product" : "Add Product"}
           </div>
 
-          <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <div
+            className="grid"
+            style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}
+          >
             <input
               className="input"
               placeholder="Name"
@@ -269,7 +258,12 @@ export default function AdminProducts() {
               className="input"
               placeholder="Stock Qty"
               value={form.stock_qty}
-              onChange={(e) => setForm({ ...form, stock_qty: Number(e.target.value || 0) })}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  stock_qty: Number(e.target.value || 0),
+                })
+              }
             />
           </div>
 
@@ -294,13 +288,24 @@ export default function AdminProducts() {
             </div>
           ) : null}
 
-          <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 10,
+              marginTop: 12,
+              flexWrap: "wrap",
+            }}
+          >
             <button className="btn" onClick={submit}>
               {editing ? "Save Changes ✅" : "Add Product ✅"}
             </button>
 
             {editing && (
-              <button className="btn" style={{ background: "#777" }} onClick={resetForm}>
+              <button
+                className="btn"
+                style={{ background: "#777" }}
+                onClick={resetForm}
+              >
                 Cancel
               </button>
             )}
@@ -315,36 +320,68 @@ export default function AdminProducts() {
 
           <div style={{ display: "grid", gap: 12 }}>
             {products.map((p) => {
-              const soldOut = (p.stock_qty ?? 0) <= 0 || (p.is_active ?? 1) === 0;
-              const imgSrc = p.image_url || p.image || "/assets/images/salad1.png";
+              const soldOut =
+                (p.stock_qty ?? 0) <= 0 || (p.is_active ?? 1) === 0;
+
+              const imgSrc =
+                p.image_url || p.image || "/assets/images/salad1.png";
 
               return (
                 <div key={p.id} className="card" style={{ padding: 12 }}>
-                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div
+                    style={{ display: "flex", gap: 12, alignItems: "center" }}
+                  >
                     <img
                       src={imgSrc}
                       alt={p.name}
-                      style={{ width: 70, height: 55, borderRadius: 12, objectFit: "cover" }}
+                      style={{
+                        width: 70,
+                        height: 55,
+                        borderRadius: 12,
+                        objectFit: "cover",
+                      }}
                     />
 
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                        }}
+                      >
                         <div style={{ fontWeight: 900 }}>
                           {p.name} {soldOut ? "❌" : "✅"}
                         </div>
                         <div style={{ fontWeight: 900 }}>₹{p.price}</div>
                       </div>
 
-                      <div style={{ marginTop: 6, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <div
+                        style={{
+                          marginTop: 6,
+                          display: "flex",
+                          gap: 8,
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <span className="chip">{p.category}</span>
                         <span className="chip">Stock: {p.stock_qty}</span>
                         {p.tags ? <span className="chip">{p.tags}</span> : null}
-                        {soldOut ? <span className="chip danger">Sold Out</span> : null}
+                        {soldOut ? (
+                          <span className="chip danger">Sold Out</span>
+                        ) : null}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      marginTop: 10,
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <button className="btn" onClick={() => startEdit(p)}>
                       Edit ✏️
                     </button>
@@ -369,7 +406,10 @@ export default function AdminProducts() {
                       className="btn"
                       style={{ background: "#555" }}
                       onClick={() => {
-                        const val = prompt("Enter stock qty:", String(p.stock_qty ?? 0));
+                        const val = prompt(
+                          "Enter stock qty:",
+                          String(p.stock_qty ?? 0)
+                        );
                         if (val === null) return;
                         updateStock(p.id, Number(val || 0));
                       }}
