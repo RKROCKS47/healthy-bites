@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { adminFetch } from "../../utils/adminFetch";
 
 const STATUSES = ["RECEIVED", "PREPARING", "PICKED", "DISPATCHED", "ARRIVED"];
 const API = import.meta.env.VITE_API_BASE;
@@ -25,10 +26,9 @@ export default function AdminOrders() {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/api/admin/orders`, {
-  headers: { "x-admin-key": adminKey },
-});
+            const res = await adminFetch("/api/admin/orders");
 const data = await res.json();
+
 
             if (!res.ok) {
                 alert(data.message || "Unauthorized");
