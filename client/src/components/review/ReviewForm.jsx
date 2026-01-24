@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { API_BASE } from "../../utils/apiBase";
 export default function ReviewForm({ orderCode, customerName }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -10,7 +10,7 @@ export default function ReviewForm({ orderCode, customerName }) {
       return;
     }
 
-    const res = await fetch("http://localhost:5000/api/reviews", {
+    const res = await fetch(`${API_BASE}/api/reviews`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
