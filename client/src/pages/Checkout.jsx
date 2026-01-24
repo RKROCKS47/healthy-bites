@@ -50,7 +50,7 @@ export default function Checkout() {
 
     setPlacing(true);
     try {
-      const res = await fetch("http://localhost:5000/api/orders", {
+      const API_BASE = import.meta.env.VITE_API_BASE;  const res = await fetch(`${API_BASE}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
