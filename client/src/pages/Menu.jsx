@@ -3,7 +3,7 @@ import { useCart } from "../context/CartContext";
 import { useEffect, useMemo, useState } from "react";
 
 const CATEGORIES = ["All", "Veg", "Non-Veg", "Vegan", "Lactose-Free"];
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 export default function Menu() {
   const { addToCart } = useCart();
