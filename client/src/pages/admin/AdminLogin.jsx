@@ -1,56 +1,53 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/common/Navbar";
 
 export default function AdminLogin() {
-  const [key, setKey] = useState("");
   const navigate = useNavigate();
+  const [adminKeyInput, setAdminKeyInput] = useState("");
 
-  const login = () => {
-    if (!key.trim()) return alert("Enter admin key");
-    localStorage.setItem("ADMIN_KEY", adminKeyInput);
+  const login = (e) => {
+    e.preventDefault();
+
+    if (!adminKeyInput.trim()) {
+      alert("Enter Admin Key");
+      return;
+    }
+
+    // save key
+    localStorage.setItem("ADMIN_KEY", adminKeyInput.trim());
+
     navigate("/admin/orders");
   };
 
   return (
-    <div style={{ padding: 16, maxWidth: 420, margin: "40px auto" }}>
-      <h2 style={{ margin: 0 }}>Admin Login</h2>
-      <p style={{ marginTop: 6, color: "#555" }}>
-        Enter your admin key to manage orders.
-      </p>
+    <>
+      <Navbar />
+      <div className="container" style={{ maxWidth: 520 }}>
+        <h2 style={{ margin: 0 }}>Admin Login</h2>
+        <p style={{ marginTop: 6, color: "#555" }}>
+          Enter your Admin Key to continue
+        </p>
 
-      <input
-        value={key}
-        onChange={(e) => setKey(e.target.value)}
-        placeholder="Admin key"
-        style={{
-          width: "100%",
-          padding: 12,
-          borderRadius: 12,
-          border: "1px solid #ddd",
-          marginTop: 10,
-        }}
-      />
+        <div className="card" style={{ padding: 14, marginTop: 14 }}>
+          <form onSubmit={login} style={{ display: "grid", gap: 10 }}>
+            <input
+              className="input"
+              placeholder="Admin Key"
+              value={adminKeyInput}
+              onChange={(e) => setAdminKeyInput(e.target.value)}
+            />
 
-      <button
-        onClick={login}
-        style={{
-          marginTop: 12,
-          width: "100%",
-          padding: 12,
-          borderRadius: 12,
-          border: "none",
-          background: "#2ECC71",
-          color: "#fff",
-          fontWeight: 900,
-          cursor: "pointer",
-        }}
-      >
-        Login
-      </button>
+            <button className="btn" type="submit">
+              Login ✅
+            </button>
+          </form>
 
-      <div style={{ marginTop: 12, fontSize: 13, color: "#777" }}>
-        Tip: Your key is set in <b>server/.env</b> as <b>ADMIN_KEY</b>.
+          <div style={{ marginTop: 10, fontSize: 12, color: "#777" }}>
+            Tip: If you get unauthorized, your Render <b>ADMIN_KEY</b> must match.
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
