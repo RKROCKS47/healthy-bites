@@ -7,7 +7,6 @@ const API = import.meta.env.VITE_API_BASE;
 
 export default function AdminProducts() {
   const navigate = useNavigate();
-  const adminKey = localStorage.getItem("ADMIN_KEY");
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,8 +24,12 @@ export default function AdminProducts() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
 
+  // Always get latest admin key (important)
+  const getAdminKey = () => localStorage.getItem("ADMIN_KEY");
+
   useEffect(() => {
-    if (!adminKey) navigate("/admin");
+    const k = getAdminKey();
+    if (!k) navigate("/admin");
     else fetchProducts();
     // eslint-disable-next-line
   }, []);
@@ -34,10 +37,14 @@ export default function AdminProducts() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
+      const adminKey = getAdminKey();
+      if (!adminKey) return navigate("/admin");
+
       const res = await fetch(`${API}/api/admin/products`, {
-  headers: { "x-admin-key": adminKey },
-});
-const data = await res.json();
+        headers: { "x-admin-key": adminKey },
+      });
+
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         alert(data.message || "Failed to load products");
@@ -70,15 +77,18 @@ const data = await res.json();
   const submit = async () => {
     if (!form.name || !form.price) return alert("Name + Price required");
 
+    const adminKey = getAdminKey();
+    if (!adminKey) return navigate("/admin");
+
     const url = editing
-      ? `${API_BASE}/api/admin/products/${editing}`
-      : `${API_BASE}/api/admin/products`;
+      ? `${API}/api/admin/products/${editing}`
+      : `${API}/api/admin/products`;
 
     const method = editing ? "PUT" : "POST";
 
     const fd = new FormData();
     fd.append("name", form.name);
-    fd.append("price", form.price);
+    fd.append("price", String(form.price));
     fd.append("category", form.category);
     fd.append("tags", form.tags || "");
     fd.append("stock_qty", String(form.stock_qty || 0));
@@ -88,7 +98,7 @@ const data = await res.json();
     try {
       const res = await fetch(url, {
         method,
-        headers: { "x-admin-key": adminKey }, // ✅ don't set content-type for FormData
+        headers: { "x-admin-key": adminKey }, // ✅ don't set Content-Type for FormData
         body: fd,
       });
 
@@ -108,13 +118,18 @@ const data = await res.json();
   };
 
   const toggle = async (id) => {
+    const adminKey = getAdminKey();
+    if (!adminKey) return navigate("/admin");
+
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products/${id}/toggle`, {
+      const res = await fetch(`${API}/api/admin/products/${id}/toggle`, {
         method: "PATCH",
         headers: { "x-admin-key": adminKey },
       });
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return alert(data.message || "Toggle failed");
+
       fetchProducts();
     } catch {
       alert("Server not reachable");
@@ -122,8 +137,11 @@ const data = await res.json();
   };
 
   const updateStock = async (id, stock_qty) => {
+    const adminKey = getAdminKey();
+    if (!adminKey) return navigate("/admin");
+
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products/${id}/stock`, {
+      const res = await fetch(`${API}/api/admin/products/${id}/stock`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -131,8 +149,10 @@ const data = await res.json();
         },
         body: JSON.stringify({ stock_qty }),
       });
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return alert(data.message || "Stock update failed");
+
       fetchProducts();
     } catch {
       alert("Server not reachable");
@@ -140,15 +160,20 @@ const data = await res.json();
   };
 
   const del = async (id) => {
+    const adminKey = getAdminKey();
+    if (!adminKey) return navigate("/admin");
+
     if (!confirm("Delete product?")) return;
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
+      const res = await fetch(`${API}/api/admin/products/${id}`, {
         method: "DELETE",
         headers: { "x-admin-key": adminKey },
       });
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return alert(data.message || "Delete failed");
+
       fetchProducts();
     } catch {
       alert("Server not reachable");
@@ -208,6 +233,7 @@ const data = await res.json();
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
+
             <input
               className="input"
               placeholder="Price (₹)"
@@ -243,9 +269,7 @@ const data = await res.json();
               className="input"
               placeholder="Stock Qty"
               value={form.stock_qty}
-              onChange={(e) =>
-                setForm({ ...form, stock_qty: Number(e.target.value || 0) })
-              }
+              onChange={(e) => setForm({ ...form, stock_qty: Number(e.target.value || 0) })}
             />
           </div>
 
@@ -255,7 +279,12 @@ const data = await res.json();
               <img
                 src={imagePreview}
                 alt="preview"
-                style={{ width: 220, height: 140, borderRadius: 14, objectFit: "cover" }}
+                style={{
+                  width: 220,
+                  height: 140,
+                  borderRadius: 14,
+                  objectFit: "cover",
+                }}
               />
               <div style={{ fontSize: 12, color: "#777", marginTop: 6 }}>
                 {editing
@@ -269,6 +298,7 @@ const data = await res.json();
             <button className="btn" onClick={submit}>
               {editing ? "Save Changes ✅" : "Add Product ✅"}
             </button>
+
             {editing && (
               <button className="btn" style={{ background: "#777" }} onClick={resetForm}>
                 Cancel
@@ -319,11 +349,19 @@ const data = await res.json();
                       Edit ✏️
                     </button>
 
-                    <button className="btn" style={{ background: "#111" }} onClick={() => toggle(p.id)}>
+                    <button
+                      className="btn"
+                      style={{ background: "#111" }}
+                      onClick={() => toggle(p.id)}
+                    >
                       Toggle Active
                     </button>
 
-                    <button className="btn" style={{ background: "#E74C3C" }} onClick={() => del(p.id)}>
+                    <button
+                      className="btn"
+                      style={{ background: "#E74C3C" }}
+                      onClick={() => del(p.id)}
+                    >
                       Delete 🗑️
                     </button>
 
