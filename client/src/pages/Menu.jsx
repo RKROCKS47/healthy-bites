@@ -60,10 +60,10 @@ export default function Menu() {
         price: p.price,
         image: imgSrc,
       });
-      showToast(`${p.name} added 🥗`);
+      showToast("Item added ✅");
     } else {
       updateQty(p.id, Number(cartItem.qty || 0) + 1);
-      showToast(`+1 ${p.name}`);
+      showToast("Quantity updated ✅");
     }
   };
 
@@ -72,13 +72,15 @@ export default function Menu() {
     if (!cartItem) return;
 
     const next = Number(cartItem.qty || 0) - 1;
+
     if (next <= 0) {
       removeFromCart(p.id);
-      showToast(`${p.name} removed`);
+      showToast("Item removed ✅");
       return;
     }
+
     updateQty(p.id, next);
-    showToast(`-1 ${p.name}`);
+    showToast("Quantity updated ✅");
   };
 
   return (
@@ -105,7 +107,7 @@ export default function Menu() {
           ))}
         </div>
 
-        {/* SKELETON LOADING */}
+        {/* Skeleton Loading */}
         {loading ? (
           <div className="grid">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -136,9 +138,9 @@ export default function Menu() {
                     alt={p.name}
                     className="card-img"
                     loading="lazy"
-                    onError={(e) =>
-                      (e.currentTarget.src = "/assets/images/salad1.png")
-                    }
+                    onError={(e) => {
+                      e.currentTarget.src = "/assets/images/salad1.png";
+                    }}
                   />
 
                   <div className="card-body">
@@ -162,7 +164,7 @@ export default function Menu() {
                       {soldOut && <span className="chip danger">Sold Out</span>}
                     </div>
 
-                    {/* ✅ Swiggy/Zomato Style Stepper */}
+                    {/* ✅ Stepper (uses your hbStepper CSS) */}
                     {soldOut ? (
                       <button
                         className="btn disabled"
@@ -173,7 +175,11 @@ export default function Menu() {
                         Not Available
                       </button>
                     ) : qty > 0 ? (
-                      <div className="hbStepper" role="group" aria-label="Quantity controls">
+                      <div
+                        className="hbStepper"
+                        role="group"
+                        aria-label="Quantity controls"
+                      >
                         <button
                           type="button"
                           className="hbStepBtn"
@@ -183,7 +189,7 @@ export default function Menu() {
                           −
                         </button>
 
-                        <div className="hbStepCount">{qty}</div>
+                        <span className="hbStepCount">{qty}</span>
 
                         <button
                           type="button"
