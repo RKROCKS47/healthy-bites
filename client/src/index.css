@@ -251,3 +251,59 @@ select {
   border: 1px solid #ddd;
   outline: none;
 }
+/* ================= MENU QTY CONTROLS (PREMIUM FEEL) ================= */
+
+.menuQty {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;                 /* ✅ more space */
+}
+
+/* round + soft buttons */
+.menuQtyBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;      /* pill circle */
+  border: none;
+  background: #f2fdf7;       /* soft green */
+  color: #2ecc71;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 6px 14px rgba(46, 204, 113, 0.18);
+  transition: all 0.15s ease;
+}
+
+/* minus softer */
+.menuQtyBtn.minus {
+  background: #f7f7f7;
+  color: #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* hover */
+.menuQtyBtn:hover {
+  transform: translateY(-1px);
+}
+
+/* click */
+.menuQtyBtn:active {
+  transform: scale(0.92);
+}
+
+/* quantity number */
+.menuQtyCount {
+  min-width: 34px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: #111;
+}
+
