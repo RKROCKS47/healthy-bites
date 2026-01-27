@@ -307,3 +307,56 @@ select {
   color: #111;
 }
 
+/* ================= MENU QTY FIX (FORCE HORIZONTAL) ================= */
+
+.menuQty {
+  margin-top: 14px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 16px !important;
+  width: fit-content !important;
+}
+
+/* IMPORTANT: override any global button styles */
+.menuQtyBtn {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 999px !important;
+  border: none !important;
+
+  /* prevent stacking / full width */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+
+  background: #f2fdf7 !important;
+  color: #2ecc71 !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+
+  box-shadow: 0 6px 14px rgba(46, 204, 113, 0.18) !important;
+  transition: transform 0.15s ease !important;
+}
+
+.menuQtyBtn:active {
+  transform: scale(0.92) !important;
+}
+
+.menuQtyCount {
+  min-width: 34px !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  color: #111 !important;
+
+  /* prevent shrink issues */
+  display: inline-block !important;
+}
