@@ -1,203 +1,109 @@
 import Navbar from "../components/common/Navbar";
 import { useCart } from "../context/CartContext";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 export default function Cart() {
-  const { items, incQty, decQty, removeItem, totals } = useCart();
-  const navigate = useNavigate();
+  const { items, totals, addToCart, updateQty, removeFromCart } = useCart();
 
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
-  const [removingIds, setRemovingIds] = useState([]);
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 600);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  const removeWithAnim = (id) => {
-    setRemovingIds((prev) => [...prev, id]);
-    setTimeout(() => {
-      removeItem(id);
-      setRemovingIds((prev) => prev.filter((x) => x !== id));
-    }, 200);
-  };
+  const freeDelivery = totals.subtotal >= 199; // change threshold if you want
 
   return (
     <>
       <Navbar />
 
-      <div
-        style={{
-          padding: isMobile ? "16px" : "28px 40px",
-          maxWidth: 1200,
-          margin: "0 auto",
-        }}
-      >
+      <div className="container">
         <h2 style={{ margin: 0 }}>Your Cart</h2>
 
-        {/* Free delivery banner */}
         {items.length > 0 && (
-          <div
-            style={{
-              marginTop: 12,
-              padding: 12,
-              borderRadius: 12,
-              background: "#f3fffa",
-              fontWeight: 800,
-            }}
-          >
-            {totals.subtotal >= 299
-              ? "✅ Free delivery unlocked!"
-              : `🚚 Add ₹${299 - totals.subtotal} more to get FREE delivery`}
-          </div>
+          <p style={{ marginTop: 6, color: "#444", fontWeight: 800 }}>
+            {freeDelivery ? "✅ Free delivery unlocked!" : "Add more for free delivery 🎁"}
+          </p>
         )}
 
         {items.length === 0 ? (
-          <p style={{ marginTop: 16 }}>
-            Cart is empty. Add some salads 🥗
-          </p>
+          <div className="card section" style={{ padding: 16 }}>
+            <p style={{ margin: 0 }}>Your cart is empty. Go to Menu 🥗</p>
+            <Link to="/menu" className="btn" style={{ marginTop: 12, display: "inline-block" }}>
+              Browse Menu
+            </Link>
+          </div>
         ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "1.5fr 1fr",
-              gap: 16,
-              marginTop: 16,
-              alignItems: "start",
-            }}
-          >
-            {/* LEFT: Items */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <>
+            <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
               {items.map((x) => (
                 <div
                   key={x.id}
+                  className="card"
                   style={{
-                    display: "flex",
+                    padding: 12,
+                    display: "grid",
+                    gridTemplateColumns: "68px 1fr auto",
                     gap: 12,
-                    padding: 14,
-                    border: "1px solid #eee",
-                    borderRadius: 14,
-                    background: "#fff",
-                    boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
                     alignItems: "center",
-                    transition: "opacity 0.2s, transform 0.2s",
-                    opacity: removingIds.includes(x.id) ? 0 : 1,
-                    transform: removingIds.includes(x.id)
-                      ? "translateX(10px)"
-                      : "translateX(0)",
                   }}
                 >
                   <img
-                    src={x.image}
+                    src={x.image || "/assets/images/salad1.png"}
                     alt={x.name}
-                    style={{
-                      width: isMobile ? 64 : 80,
-                      height: isMobile ? 56 : 70,
-                      borderRadius: 10,
-                      objectFit: "cover",
-                      flexShrink: 0,
-                    }}
+                    style={{ width: 68, height: 56, borderRadius: 12, objectFit: "cover" }}
+                    onError={(e) => (e.currentTarget.src = "/assets/images/salad1.png")}
                   />
 
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: 8,
-                        alignItems: "center",
-                      }}
-                    >
-                      <strong style={{ fontSize: 14 }}>{x.name}</strong>
-                      <strong style={{ fontSize: 14 }}>
-                        ₹{x.price * x.qty}
-                      </strong>
+                  <div>
+                    <div style={{ fontWeight: 900 }}>{x.name}</div>
+                    <div style={{ marginTop: 4, color: "#444", fontWeight: 900 }}>
+                      ₹{Number(x.price || 0) * Number(x.qty || 0)}
                     </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        marginTop: 8,
-                        flexWrap: "wrap",
-                      }}
-                    >
+                    {/* ✅ Qty controls */}
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 10 }}>
                       <button
-                        onClick={() =>
-                          x.qty === 1
-                            ? removeWithAnim(x.id)
-                            : decQty(x.id)
-                        }
-                        style={qtyBtn}
+                        className="btn"
+                        style={{ padding: "6px 10px", background: "#111" }}
+                        onClick={() => updateQty(x.id, Number(x.qty || 0) - 1)}
                       >
                         −
                       </button>
 
-                      <span
-                        style={{
-                          minWidth: 20,
-                          textAlign: "center",
-                          fontWeight: 700,
-                        }}
-                      >
+                      <div style={{ minWidth: 24, textAlign: "center", fontWeight: 900 }}>
                         {x.qty}
-                      </span>
+                      </div>
 
                       <button
-                        onClick={() => incQty(x.id)}
-                        style={qtyBtn}
+                        className="btn"
+                        style={{ padding: "6px 10px" }}
+                        onClick={() => addToCart(x)} // ✅ increases qty
                       >
                         +
                       </button>
 
                       <button
-                        onClick={() => removeWithAnim(x.id)}
-                        style={{
-                          marginLeft: "auto",
-                          border: "none",
-                          background: "transparent",
-                          color: "#d11",
-                          fontWeight: 700,
-                        }}
+                        className="btn"
+                        style={{ padding: "6px 10px", background: "#E74C3C" }}
+                        onClick={() => removeFromCart(x.id)}
                       >
                         Remove
                       </button>
                     </div>
                   </div>
+
+                  <div style={{ fontWeight: 900 }}>₹{x.price}</div>
                 </div>
               ))}
             </div>
 
-            {/* RIGHT: Summary */}
-            <div style={card}>
-              <h3 style={{ marginTop: 0 }}>Bill Summary</h3>
-
+            {/* Summary */}
+            <div className="card section" style={{ padding: 16, marginTop: 16 }}>
               <Row label="Subtotal" value={`₹${totals.subtotal}`} />
               <Row label="Delivery Fee" value={`₹${totals.deliveryFee}`} />
-              <hr style={{ border: "none", borderTop: "1px solid #eee" }} />
+              <div style={{ height: 1, background: "#eee", margin: "12px 0" }} />
               <Row label="Total" value={`₹${totals.total}`} bold />
 
-              <button
-                onClick={() => navigate("/checkout")}
-                style={{
-                  marginTop: 12,
-                  width: "100%",
-                  padding: "14px",
-                  borderRadius: 12,
-                  border: "none",
-                  background: "#2ECC71",
-                  color: "#fff",
-                  fontWeight: 900,
-                  fontSize: 16,
-                }}
-              >
-                Proceed to Checkout
-              </button>
+              <Link to="/checkout" className="btn" style={{ marginTop: 14, display: "inline-block" }}>
+                Continue to Checkout ✅
+              </Link>
             </div>
-          </div>
+          </>
         )}
       </div>
     </>
@@ -206,34 +112,9 @@ export default function Cart() {
 
 function Row({ label, value, bold }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        margin: "10px 0",
-        fontWeight: bold ? 800 : 600,
-      }}
-    >
+    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: bold ? 900 : 800 }}>
       <span>{label}</span>
       <span>{value}</span>
     </div>
   );
 }
-
-const card = {
-  border: "1px solid #eee",
-  borderRadius: 14,
-  padding: 16,
-  background: "#fff",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.06)",
-};
-
-const qtyBtn = {
-  width: 36,
-  height: 36,
-  borderRadius: 8,
-  border: "1px solid #ddd",
-  background: "#fff",
-  fontWeight: 900,
-};
-
