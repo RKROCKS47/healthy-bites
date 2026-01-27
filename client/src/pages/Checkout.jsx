@@ -234,7 +234,7 @@ export default function Checkout() {
                       fontSize: 13,
                     }}
                   >
-                    Online payments will be connected via next.
+                    Online payments will be connected via next
                     Update For now, place order to "COD"
                   </div>
                 )}
