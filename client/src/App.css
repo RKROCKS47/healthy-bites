@@ -6,7 +6,20 @@
   text-align: center;
 }
 /* ---------- Healthy Bites Skeleton Loader ---------- */
+.hb-qty-btn {
+  width: 44px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-weight: 900;
+  font-size: 18px;
+  cursor: pointer;
+}
 
+.hb-qty-btn:active {
+  transform: scale(0.98);
+}
 .hb-skel-img {
   width: 100%;
   height: 160px;
