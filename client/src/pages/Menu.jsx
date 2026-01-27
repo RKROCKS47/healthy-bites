@@ -17,12 +17,10 @@ export default function Menu() {
 
   const [products, setProducts] = useState([]);
   const [active, setActive] = useState("All");
-
   const [loading, setLoading] = useState(true);
 
   // toast popup
   const [toast, setToast] = useState("");
-
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(""), 1500);
@@ -52,8 +50,8 @@ export default function Menu() {
 
   const inc = (p) => {
     const cartItem = cartMap.get(p.id);
-
     const imgSrc = resolveImg(p.image_url || p.image || "");
+
     if (!cartItem) {
       addToCart({
         id: p.id,
@@ -136,24 +134,35 @@ export default function Menu() {
                     alt={p.name}
                     className="card-img"
                     loading="lazy"
-                    onError={(e) => (e.currentTarget.src = "/assets/images/salad1.png")}
+                    onError={(e) =>
+                      (e.currentTarget.src = "/assets/images/salad1.png")
+                    }
                   />
 
                   <div className="card-body">
-                    <div className="row">
-                      <h3>{p.name}</h3>
+                    {/* ✅ FIXED ORDER: Name + Price (no duplicate) */}
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <h3 style={{ margin: 0 }}>{p.name}</h3>
                       <strong>₹{p.price}</strong>
                     </div>
 
-                    <div className="chips">
+                    {/* Category + Tags */}
+                    <div className="chips" style={{ marginTop: 8 }}>
                       <span className="chip">{p.category}</span>
                       {p.tags && <span className="chip">{p.tags}</span>}
                       {soldOut && <span className="chip danger">Sold Out</span>}
                     </div>
 
-                    {/* ✅ Menu Qty Controls (round buttons like Cart style) */}
+                    {/* ✅ Round Qty controls like cart style */}
                     {soldOut ? (
-                      <button className="btn disabled" disabled>
+                      <button className="btn disabled" disabled style={{ marginTop: 12 }}>
                         Not Available
                       </button>
                     ) : qty > 0 ? (
@@ -169,10 +178,7 @@ export default function Menu() {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        className="btn"
-                        onClick={() => inc(p)}
-                      >
+                      <button className="btn" onClick={() => inc(p)} style={{ marginTop: 12 }}>
                         Add to Cart
                       </button>
                     )}
