@@ -5,43 +5,49 @@ import { API_BASE } from "../utils/apiBase";
 
 const CATEGORIES = ["All", "Veg", "Non-Veg", "Vegan", "Lactose-Free"];
 
-function resolveImg(raw) {
-  if (!raw) return "/assets/images/salad1.png";
-  if (raw.startsWith("/uploads")) return `${API_BASE}${raw}`;
-  return raw; // full URL (cloudinary etc)
+// ✅ Always resolve correct image
+function resolveImg(p) {
+  // Cloudinary full url stored in image_url (best)
+  if (p?.image_url && typeof p.image_url === "string") return p.image_url;
+
+  // sometimes you store in image field as full url
+  if (p?.image && typeof p.image === "string") {
+    if (p.image.startsWith("http")) return p.image;
+    if (p.image.startsWith("/uploads")) return `${API_BASE}${p.image}`;
+  }
+
+  return "/assets/images/salad1.png";
 }
 
 export default function Menu() {
-  // ✅ MUST have items in context
-  const { items, addToCart, updateQty } = useCart(); 
-  // If your context doesn't have updateQty, see note below.
+  const { addToCart } = useCart();
 
   const [products, setProducts] = useState([]);
   const [active, setActive] = useState("All");
 
+  const [loading, setLoading] = useState(true);
+
   // ⭐ rating stats
-  const [ratingStats, setRatingStats] = useState({ avgRating: 0, totalReviews: 0 });
+  const [ratingStats, setRatingStats] = useState({
+    avgRating: 0,
+    totalReviews: 0,
+  });
 
-  // ✅ toast state
-  const [toast, setToast] = useState("");
-
-  const showToast = (msg) => {
-    setToast(msg);
-    window.clearTimeout(window.__hb_toast_timer);
-    window.__hb_toast_timer = window.setTimeout(() => setToast(""), 1500);
-  };
-
+  // ✅ fetch products
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_BASE}/api/products`)
       .then((r) => r.json())
       .then((data) => setProducts(Array.isArray(data) ? data : []))
-      .catch(() => {});
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false));
   }, []);
 
+  // ✅ fetch rating stats
   useEffect(() => {
     fetch(`${API_BASE}/api/reviews/stats/average`)
       .then((r) => r.json())
-      .then(setRatingStats)
+      .then((d) => setRatingStats(d || { avgRating: 0, totalReviews: 0 }))
       .catch(() => {});
   }, []);
 
@@ -50,60 +56,9 @@ export default function Menu() {
     return products.filter((p) => p.category === active);
   }, [active, products]);
 
-  // ✅ helper: qty in cart
-  const getQty = (productId) => {
-    const found = items?.find((x) => Number(x.id) === Number(productId));
-    return found ? Number(found.qty || 0) : 0;
-  };
-
-  const inc = (p) => {
-    const soldOut = p.sold_out ?? Number(p.stock_qty || 0) <= 0;
-    if (soldOut) return;
-
-    const raw = p.image_url || p.image || "";
-    const imgSrc = resolveImg(raw);
-
-    const qty = getQty(p.id);
-
-    if (qty === 0) {
-      addToCart({ id: p.id, name: p.name, price: p.price, image: imgSrc });
-      showToast(`${p.name} added ✅`);
-    } else {
-      updateQty(p.id, qty + 1);
-      showToast(`+1 ${p.name}`);
-    }
-  };
-
-  const dec = (p) => {
-    const qty = getQty(p.id);
-    if (qty <= 0) return;
-    updateQty(p.id, qty - 1);
-  };
-
   return (
     <>
       <Navbar />
-
-      {/* ✅ TOAST POPUP */}
-      {toast ? (
-        <div
-          style={{
-            position: "fixed",
-            bottom: 18,
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "#111",
-            color: "#fff",
-            padding: "10px 14px",
-            borderRadius: 999,
-            fontWeight: 900,
-            zIndex: 9999,
-            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
-          }}
-        >
-          {toast}
-        </div>
-      ) : null}
 
       <div className="container">
         <h2 style={{ margin: 0 }}>Menu</h2>
@@ -118,95 +73,90 @@ export default function Menu() {
               key={c}
               onClick={() => setActive(c)}
               className={active === c ? "tab active" : "tab"}
+              disabled={loading}
+              style={loading ? { opacity: 0.7, cursor: "not-allowed" } : {}}
             >
               {c}
             </button>
           ))}
         </div>
 
-        {/* Products */}
-        <div className="grid">
-          {filtered.map((p) => {
-            const soldOut = p.sold_out ?? Number(p.stock_qty || 0) <= 0;
-            const raw = p.image_url || p.image || "";
-            const imgSrc = resolveImg(raw);
-
-            const qty = getQty(p.id);
-
-            return (
-              <div key={p.id} className="card">
-                <img
-                  src={imgSrc}
-                  alt={p.name}
-                  className="card-img"
-                  onError={(e) => (e.currentTarget.src = "/assets/images/salad1.png")}
-                />
-
+        {/* ✅ Skeleton while loading */}
+        {loading ? (
+          <div className="grid">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="card">
+                <div className="hb-skel-img" />
                 <div className="card-body">
-                  <div className="row">
-                    <h3>{p.name}</h3>
-                    <strong>₹{p.price}</strong>
+                  <div className="hb-skel-line" />
+                  <div className="hb-skel-line short" />
+                  <div className="hb-skel-chiprow">
+                    <div className="hb-skel-chip" />
+                    <div className="hb-skel-chip" />
                   </div>
-
-                  {/* ⭐ Rating */}
-                  {ratingStats.totalReviews > 0 ? (
-                    <div className="rating">
-                      ★ {ratingStats.avgRating}
-                      <span>({ratingStats.totalReviews})</span>
-                    </div>
-                  ) : (
-                    <div className="rating muted">⭐ New</div>
-                  )}
-
-                  <div className="chips">
-                    <span className="chip">{p.category}</span>
-                    {p.tags && <span className="chip">{p.tags}</span>}
-                    {soldOut && <span className="chip danger">Sold Out</span>}
-                  </div>
-
-                  {/* ✅ Add to cart OR qty controls */}
-                  {soldOut ? (
-                    <button className="btn disabled" disabled>
-                      Not Available
-                    </button>
-                  ) : qty > 0 ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 10,
-                        marginTop: 10,
-                      }}
-                    >
-                      <button
-                        className="btn"
-                        style={{ width: 44, background: "#111" }}
-                        onClick={() => dec(p)}
-                      >
-                        −
-                      </button>
-
-                      <div style={{ fontWeight: 900, fontSize: 16 }}>{qty}</div>
-
-                      <button
-                        className="btn"
-                        style={{ width: 44 }}
-                        onClick={() => inc(p)}
-                      >
-                        +
-                      </button>
-                    </div>
-                  ) : (
-                    <button className="btn" onClick={() => inc(p)}>
-                      Add to Cart
-                    </button>
-                  )}
+                  <div className="hb-skel-btn" />
                 </div>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid">
+            {filtered.map((p) => {
+              const soldOut = p.sold_out ?? (Number(p.stock_qty || 0) <= 0);
+              const imgSrc = resolveImg(p);
+
+              return (
+                <div key={p.id} className="card">
+                  <img
+                    src={imgSrc}
+                    alt={p.name}
+                    className="card-img"
+                    loading="lazy" // ✅ Step 1: Lazy load
+                    onError={(e) => (e.currentTarget.src = "/assets/images/salad1.png")}
+                  />
+
+                  <div className="card-body">
+                    <div className="row">
+                      <h3>{p.name}</h3>
+                      <strong>₹{p.price}</strong>
+                    </div>
+
+                    {/* ⭐ Rating */}
+                    {ratingStats.totalReviews > 0 ? (
+                      <div className="rating">
+                        ★ {ratingStats.avgRating}
+                        <span>({ratingStats.totalReviews})</span>
+                      </div>
+                    ) : (
+                      <div className="rating muted">⭐ New</div>
+                    )}
+
+                    <div className="chips">
+                      <span className="chip">{p.category}</span>
+                      {p.tags && <span className="chip">{p.tags}</span>}
+                      {soldOut && <span className="chip danger">Sold Out</span>}
+                    </div>
+
+                    <button
+                      disabled={soldOut}
+                      onClick={() =>
+                        addToCart({
+                          id: p.id,
+                          name: p.name,
+                          price: p.price,
+                          image: imgSrc, // ✅ cart stores correct absolute url
+                        })
+                      }
+                      className={soldOut ? "btn disabled" : "btn"}
+                    >
+                      {soldOut ? "Not Available" : "Add to Cart"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </>
   );
