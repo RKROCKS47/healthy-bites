@@ -24,7 +24,7 @@ export default function Menu() {
   const showToast = (msg) => {
     setToast(msg);
     window.clearTimeout(window.__hbToastTimer);
-    window.__hbToastTimer = window.setTimeout(() => setToast(""), 1500);
+    window.__hbToastTimer = window.setTimeout(() => setToast(""), 1400);
   };
 
   // quick lookup of cart qty by product id
@@ -63,7 +63,7 @@ export default function Menu() {
       showToast(`${p.name} added 🥗`);
     } else {
       updateQty(p.id, Number(cartItem.qty || 0) + 1);
-      showToast(`Updated ${p.name}`);
+      showToast(`+1 ${p.name}`);
     }
   };
 
@@ -78,7 +78,7 @@ export default function Menu() {
       return;
     }
     updateQty(p.id, next);
-    showToast(`Updated ${p.name}`);
+    showToast(`-1 ${p.name}`);
   };
 
   return (
@@ -98,6 +98,7 @@ export default function Menu() {
               key={c}
               onClick={() => setActive(c)}
               className={active === c ? "tab active" : "tab"}
+              type="button"
             >
               {c}
             </button>
@@ -141,7 +142,7 @@ export default function Menu() {
                   />
 
                   <div className="card-body">
-                    {/* ✅ Name + Price */}
+                    {/* Name + Price */}
                     <div
                       style={{
                         display: "flex",
@@ -161,31 +162,34 @@ export default function Menu() {
                       {soldOut && <span className="chip danger">Sold Out</span>}
                     </div>
 
-                    {/* ✅ FIXED: Menu qty always horizontal */}
+                    {/* ✅ Swiggy/Zomato Style Stepper */}
                     {soldOut ? (
                       <button
                         className="btn disabled"
                         disabled
                         style={{ marginTop: 12 }}
+                        type="button"
                       >
                         Not Available
                       </button>
                     ) : qty > 0 ? (
-                      <div className="menuQty">
+                      <div className="hbStepper" role="group" aria-label="Quantity controls">
                         <button
                           type="button"
-                          className="menuQtyBtn"
+                          className="hbStepBtn"
                           onClick={() => dec(p)}
+                          aria-label="Decrease quantity"
                         >
                           −
                         </button>
 
-                        <span className="menuQtyCount">{qty}</span>
+                        <div className="hbStepCount">{qty}</div>
 
                         <button
                           type="button"
-                          className="menuQtyBtn"
+                          className="hbStepBtn"
                           onClick={() => inc(p)}
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -195,6 +199,7 @@ export default function Menu() {
                         className="btn"
                         onClick={() => inc(p)}
                         style={{ marginTop: 12 }}
+                        type="button"
                       >
                         Add to Cart
                       </button>
@@ -207,7 +212,7 @@ export default function Menu() {
         )}
       </div>
 
-      {/* ✅ Toast Popup */}
+      {/* Toast Popup */}
       {toast && <div className="toast">{toast}</div>}
     </>
   );
