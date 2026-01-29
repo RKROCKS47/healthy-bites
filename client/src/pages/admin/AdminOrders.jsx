@@ -1,19 +1,32 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { adminFetch } from "../../utils/adminFetch";
+import Navbar from "../../components/common/Navbar";
+import { API_BASE } from "../../utils/apiBase";
 
 const STATUSES = ["RECEIVED", "PREPARING", "PICKED", "DISPATCHED", "ARRIVED"];
-const API = import.meta.env.VITE_API_BASE;
+
+function resolveImg(raw) {
+  if (!raw) return "/assets/images/salad1.png";
+  if (typeof raw !== "string") return "/assets/images/salad1.png";
+
+  // cloudinary / any full url
+  if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+
+  // old render uploads (relative path stored in DB)
+  if (raw.startsWith("/uploads")) return `${API_BASE}${raw}`;
+
+  return raw; // best effort
+}
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const [openOrder, setOpenOrder] = useState(null);
   const [orderItems, setOrderItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(false);
-
-  const navigate = useNavigate();
 
   const requireAdmin = () => {
     const k = localStorage.getItem("ADMIN_KEY");
@@ -52,9 +65,7 @@ export default function AdminOrders() {
 
       if (!res.ok) return alert(data.message || "Failed to load items");
 
-      // backend may return array directly OR {items: []}
-      const items = Array.isArray(data) ? data : data.items || [];
-      setOrderItems(items);
+      setOrderItems(data.items || []);
       setOpenOrder(orderCode);
     } catch {
       alert("Server not reachable");
@@ -75,9 +86,7 @@ export default function AdminOrders() {
       if (!res.ok) return alert(data.message || "Update failed");
 
       setOrders((prev) =>
-        prev.map((o) =>
-          o.order_code === orderCode ? { ...o, order_status: status } : o
-        )
+        prev.map((o) => (o.order_code === orderCode ? { ...o, status } : o))
       );
     } catch {
       alert("Update failed (server issue)");
@@ -89,162 +98,118 @@ export default function AdminOrders() {
     // eslint-disable-next-line
   }, []);
 
-  const dashBtn = {
-    padding: "6px 12px",
-    borderRadius: "8px",
-    border: "none",
-    background: "#222",
-    color: "#fff",
-    cursor: "pointer",
-  };
-
   return (
-    <div style={{ padding: 16, maxWidth: 1200, margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 10,
-          flexWrap: "wrap",
-        }}
-      >
-        <h2 style={{ margin: 0 }}>Admin Orders</h2>
+    <>
+      <Navbar />
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button onClick={fetchOrders} style={btn}>
-            Refresh 🔄
-          </button>
+      <div style={{ padding: 16, maxWidth: 1200, margin: "0 auto" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Admin Orders</h2>
 
-          <button
-            onClick={() => {
-              localStorage.removeItem("ADMIN_KEY");
-              navigate("/admin");
-            }}
-            style={{ ...btn, background: "#111" }}
-          >
-            Logout
-          </button>
-
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button onClick={() => navigate("/admin/orders")} style={dashBtn}>
-              📦 Orders
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={fetchOrders} style={btn}>
+              Refresh 🔄
             </button>
 
-            <button onClick={() => navigate("/admin/products")} style={dashBtn}>
-              🥗 Products
+            <button
+              onClick={() => {
+                localStorage.removeItem("ADMIN_KEY");
+                navigate("/admin");
+              }}
+              style={{ ...btn, background: "#111" }}
+            >
+              Logout
             </button>
           </div>
         </div>
-      </div>
 
-      {loading ? (
-        <p style={{ marginTop: 14 }}>Loading orders...</p>
-      ) : orders.length === 0 ? (
-        <p style={{ marginTop: 14 }}>No orders yet.</p>
-      ) : (
-        <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
-          {orders.map((o) => (
-            <div key={o.order_code} style={card}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 900 }}>
-                    Order: {o.order_code} • ₹{o.total}
-                  </div>
-
-                  <div style={{ color: "#555", marginTop: 4, fontSize: 13 }}>
-                    {o.customer_name} • {o.phone}
-                  </div>
-
-                  <div style={{ color: "#555", marginTop: 4, fontSize: 13 }}>
-                    {o.address_line}, {o.area}, {o.city} - {o.pincode}
-                  </div>
-
-                  <div style={{ marginTop: 6, fontSize: 13 }}>
-                    <b>Payment:</b> {o.payment_method} ({o.payment_status})
-                  </div>
-                </div>
-
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 900, color: "#2ECC71" }}>
-                    {o.order_status}
-                  </div>
-                  <div style={{ fontSize: 12, color: "#777", marginTop: 4 }}>
-                    {new Date(o.created_at).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => {
-                  if (openOrder === o.order_code) {
-                    setOpenOrder(null);
-                    setOrderItems([]);
-                  } else {
-                    fetchItems(o.order_code);
-                  }
-                }}
-                style={{
-                  marginTop: 10,
-                  padding: "10px 12px",
-                  borderRadius: 12,
-                  border: "1px solid #ddd",
-                  background: "#fff",
-                  fontWeight: 900,
-                  cursor: "pointer",
-                }}
-              >
-                {openOrder === o.order_code ? "Hide Items" : "View Items 🍽️"}
-              </button>
-
-              {openOrder === o.order_code && (
+        {loading ? (
+          <p style={{ marginTop: 14 }}>Loading orders...</p>
+        ) : orders.length === 0 ? (
+          <p style={{ marginTop: 14 }}>No orders yet.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
+            {orders.map((o) => (
+              <div key={o.order_code} style={card}>
                 <div
                   style={{
-                    marginTop: 12,
-                    borderTop: "1px solid #eee",
-                    paddingTop: 12,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    flexWrap: "wrap",
                   }}
                 >
-                  <div style={{ fontWeight: 900, marginBottom: 8 }}>
-                    Items ({itemsLoading ? "loading..." : orderItems.length})
+                  <div>
+                    <div style={{ fontWeight: 900 }}>
+                      Order: {o.order_code} • ₹{o.total_amount}
+                    </div>
+
+                    <div style={{ color: "#555", marginTop: 4, fontSize: 13 }}>
+                      {o.customer_name} • {o.phone}
+                    </div>
+
+                    <div style={{ color: "#555", marginTop: 4, fontSize: 13 }}>
+                      <b>Address:</b> {o.address ? o.address : "-"}
+                      {o.city ? `, ${o.city}` : ""}
+                      {o.pincode ? ` - ${o.pincode}` : ""}
+                    </div>
+
+                    <div style={{ marginTop: 6, fontSize: 13 }}>
+                      <b>Payment:</b> {o.payment_method} ({o.payment_status})
+                    </div>
                   </div>
 
-                  {itemsLoading ? (
-                    <p style={{ margin: 0, color: "#777" }}>Loading items...</p>
-                  ) : orderItems.length === 0 ? (
-                    <p style={{ margin: 0, color: "#777" }}>
-                      No items found for this order.
-                    </p>
-                  ) : (
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {orderItems.map((it) => {
-                        const img =
-                          it.image && it.image.startsWith("/uploads")
-                            ? `${API}${it.image}`
-                            : it.image;
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontWeight: 900, color: "#2ECC71" }}>
+                      {o.status}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#777", marginTop: 4 }}>
+                      {o.created_at ? new Date(o.created_at).toLocaleString() : ""}
+                    </div>
+                  </div>
+                </div>
 
-                        return (
-                          <div
-                            key={it.id}
-                            style={{
-                              display: "flex",
-                              gap: 10,
-                              alignItems: "center",
-                              border: "1px solid #f0f0f0",
-                              borderRadius: 12,
-                              padding: 10,
-                              background: "#fafafa",
-                            }}
-                          >
-                            {img ? (
+                <button
+                  onClick={() => {
+                    if (openOrder === o.order_code) {
+                      setOpenOrder(null);
+                      setOrderItems([]);
+                    } else {
+                      fetchItems(o.order_code);
+                    }
+                  }}
+                  style={viewBtn}
+                >
+                  {openOrder === o.order_code ? "Hide Items" : "View Items 🍽️"}
+                </button>
+
+                {openOrder === o.order_code && (
+                  <div style={{ marginTop: 12, borderTop: "1px solid #eee", paddingTop: 12 }}>
+                    <div style={{ fontWeight: 900, marginBottom: 8 }}>
+                      Items ({itemsLoading ? "loading..." : orderItems.length})
+                    </div>
+
+                    {itemsLoading ? (
+                      <p style={{ margin: 0, color: "#777" }}>Loading items...</p>
+                    ) : orderItems.length === 0 ? (
+                      <p style={{ margin: 0, color: "#777" }}>No items found.</p>
+                    ) : (
+                      <div style={{ display: "grid", gap: 10 }}>
+                        {orderItems.map((it) => {
+                          const imgSrc = resolveImg(it.image);
+
+                          return (
+                            <div key={it.id} style={itemRow}>
+                              {/* ✅ IMAGE RESTORED */}
                               <img
-                                src={img}
+                                src={imgSrc}
                                 alt={it.name}
                                 style={{
                                   width: 54,
@@ -252,72 +217,54 @@ export default function AdminOrders() {
                                   borderRadius: 10,
                                   objectFit: "cover",
                                   background: "#fff",
+                                  border: "1px solid #eee",
                                 }}
                                 onError={(e) => {
-                                  e.currentTarget.src =
-                                    "/assets/images/salad1.png";
+                                  e.currentTarget.src = "/assets/images/salad1.png";
                                 }}
                               />
-                            ) : (
-                              <div
-                                style={{
-                                  width: 54,
-                                  height: 44,
-                                  borderRadius: 10,
-                                  background: "#eee",
-                                }}
-                              />
-                            )}
 
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 900, fontSize: 13 }}>
-                                {it.name}
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 900, fontSize: 13 }}>{it.name}</div>
+                                <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
+                                  ₹{it.price} × {it.qty}
+                                </div>
                               </div>
-                              <div
-                                style={{
-                                  fontSize: 12,
-                                  color: "#666",
-                                  marginTop: 2,
-                                }}
-                              >
-                                ₹{it.price} × {it.qty}
-                              </div>
-                            </div>
 
-                            <div style={{ fontWeight: 900 }}>
-                              ₹{it.price * it.qty}
+                              <div style={{ fontWeight: 900 }}>₹{it.price * it.qty}</div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => updateStatus(o.order_code, s)}
+                      style={{
+                        ...statusBtn,
+                        borderColor: o.status === s ? "#2ECC71" : "#ddd",
+                        background: o.status === s ? "#eafff2" : "#fff",
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
                 </div>
-              )}
-
-              <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {STATUSES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => updateStatus(o.order_code, s)}
-                    style={{
-                      ...statusBtn,
-                      borderColor: o.order_status === s ? "#2ECC71" : "#ddd",
-                      background: o.order_status === s ? "#eafff2" : "#fff",
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 
+/* styles */
 const card = {
   border: "1px solid #eee",
   borderRadius: 14,
@@ -336,6 +283,16 @@ const btn = {
   cursor: "pointer",
 };
 
+const viewBtn = {
+  marginTop: 10,
+  padding: "10px 12px",
+  borderRadius: 12,
+  border: "1px solid #ddd",
+  background: "#fff",
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
 const statusBtn = {
   padding: "10px 10px",
   borderRadius: 999,
@@ -344,4 +301,14 @@ const statusBtn = {
   fontWeight: 900,
   cursor: "pointer",
   fontSize: 12,
+};
+
+const itemRow = {
+  display: "flex",
+  gap: 10,
+  alignItems: "center",
+  border: "1px solid #f0f0f0",
+  borderRadius: 12,
+  padding: 10,
+  background: "#fafafa",
 };

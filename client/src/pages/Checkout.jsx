@@ -234,8 +234,8 @@ export default function Checkout() {
                       fontSize: 13,
                     }}
                   >
-                    Online payments will be connected via Razorpay next.
-                    For now, place order to test flow.
+                    Online payments will be connected via next
+                    Update For now, place order to "COD"
                   </div>
                 )}
               </div>

@@ -1,10 +1,12 @@
 import Navbar from "../components/common/Navbar";
 import { useCart } from "../context/CartContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 export default function Cart() {
-  const { items, incQty, decQty, removeItem, totals } = useCart();
+  // ✅ use ONLY these from context
+  const { items, totals, addToCart, updateQty, removeFromCart } = useCart();
+
   const navigate = useNavigate();
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
@@ -19,9 +21,16 @@ export default function Cart() {
   const removeWithAnim = (id) => {
     setRemovingIds((prev) => [...prev, id]);
     setTimeout(() => {
-      removeItem(id);
+      removeFromCart(id); // ✅ fixed
       setRemovingIds((prev) => prev.filter((x) => x !== id));
     }, 200);
+  };
+
+  const incQty = (item) => addToCart(item); // ✅ fixed (addToCart increases qty)
+  const decQty = (item) => {
+    const next = Number(item.qty || 0) - 1;
+    if (next <= 0) return removeWithAnim(item.id);
+    updateQty(item.id, next); // ✅ fixed
   };
 
   return (
@@ -48,16 +57,23 @@ export default function Cart() {
               fontWeight: 800,
             }}
           >
-            {totals.subtotal >= 299
+            {totals.subtotal >= 150
               ? "✅ Free delivery unlocked!"
-              : `🚚 Add ₹${299 - totals.subtotal} more to get FREE delivery`}
+              : `🚚 Add ₹${150 - totals.subtotal} more to get FREE delivery`}
           </div>
         )}
 
         {items.length === 0 ? (
-          <p style={{ marginTop: 16 }}>
-            Cart is empty. Add some salads 🥗
-          </p>
+          <div style={{ marginTop: 16 }}>
+            <p>Cart is empty. Add some salads 🥗</p>
+            <Link
+              to="/menu"
+              className="btn"
+              style={{ marginTop: 10, display: "inline-block" }}
+            >
+              Browse Menu
+            </Link>
+          </div>
         ) : (
           <div
             style={{
@@ -90,7 +106,7 @@ export default function Cart() {
                   }}
                 >
                   <img
-                    src={x.image}
+                    src={x.image || "/assets/images/salad1.png"}
                     alt={x.name}
                     style={{
                       width: isMobile ? 64 : 80,
@@ -99,6 +115,9 @@ export default function Cart() {
                       objectFit: "cover",
                       flexShrink: 0,
                     }}
+                    onError={(e) =>
+                      (e.currentTarget.src = "/assets/images/salad1.png")
+                    }
                   />
 
                   <div style={{ flex: 1 }}>
@@ -112,7 +131,7 @@ export default function Cart() {
                     >
                       <strong style={{ fontSize: 14 }}>{x.name}</strong>
                       <strong style={{ fontSize: 14 }}>
-                        ₹{x.price * x.qty}
+                        ₹{Number(x.price || 0) * Number(x.qty || 0)}
                       </strong>
                     </div>
 
@@ -125,14 +144,7 @@ export default function Cart() {
                         flexWrap: "wrap",
                       }}
                     >
-                      <button
-                        onClick={() =>
-                          x.qty === 1
-                            ? removeWithAnim(x.id)
-                            : decQty(x.id)
-                        }
-                        style={qtyBtn}
-                      >
+                      <button onClick={() => decQty(x)} style={qtyBtn}>
                         −
                       </button>
 
@@ -146,10 +158,7 @@ export default function Cart() {
                         {x.qty}
                       </span>
 
-                      <button
-                        onClick={() => incQty(x.id)}
-                        style={qtyBtn}
-                      >
+                      <button onClick={() => incQty(x)} style={qtyBtn}>
                         +
                       </button>
 
@@ -161,6 +170,7 @@ export default function Cart() {
                           background: "transparent",
                           color: "#d11",
                           fontWeight: 700,
+                          cursor: "pointer",
                         }}
                       >
                         Remove
@@ -192,6 +202,7 @@ export default function Cart() {
                   color: "#fff",
                   fontWeight: 900,
                   fontSize: 16,
+                  cursor: "pointer",
                 }}
               >
                 Proceed to Checkout
@@ -235,5 +246,5 @@ const qtyBtn = {
   border: "1px solid #ddd",
   background: "#fff",
   fontWeight: 900,
+  cursor: "pointer",
 };
-
