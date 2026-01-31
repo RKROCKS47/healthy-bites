@@ -13,6 +13,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 
 import { CartProvider } from "./context/CartContext";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 function App() {
   return (
