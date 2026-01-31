@@ -1,9 +1,22 @@
+const fetch = require("node-fetch");
+
 async function notifyTelegram(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  console.log("TG ENV CHECK:", {
+    hasToken: !!token,
+    chatId,
+  });
+
+  if (!token || !chatId) {
+    console.log("❌ Telegram env missing");
+    return;
+  }
+
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -14,10 +27,8 @@ async function notifyTelegram(text) {
     }),
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    console.log("Telegram notify failed:", err);
-  }
+  const body = await res.text();
+  console.log("TG RESPONSE:", res.status, body);
 }
 
 module.exports = { notifyTelegram };
