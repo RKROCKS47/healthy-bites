@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
+const { notifyTelegram } = require("../utils/telegram"); // ✅ ADDED
 
 console.log("✅ Order routes loaded");
 
@@ -106,7 +107,7 @@ router.post("/", (req, res) => {
         `INSERT INTO order_items (order_code, name, price, qty, image)
          VALUES ?`,
         [values],
-        (err2) => {
+        async (err2) => {
           if (err2) {
             console.error("ORDER ITEMS DB ERROR:", err2);
             return res.status(500).json({
@@ -125,6 +126,26 @@ router.post("/", (req, res) => {
               () => {}
             );
           });
+
+          // ✅ TELEGRAM NOTIFICATION (best-effort, won't block response)
+          try {
+            const itemLines = items
+              .map((i) => `• ${i.name} x${Number(i.qty || 1)} (₹${Number(i.price || 0)})`)
+              .join("\n");
+
+            await notifyTelegram(
+              `🥗 <b>New Order Received</b>\n` +
+                `Order: <b>${orderCode}</b>\n` +
+                `Name: ${customer.fullName}\n` +
+                `Phone: ${customer.phone}\n` +
+                `Payment: ${paymentMethod || "COD"} (${paymentStatus || "PENDING"})\n` +
+                `Total: <b>₹${totalAmount}</b>\n\n` +
+                `${itemLines}\n\n` +
+                `Address: ${addressText || "-"}`
+            );
+          } catch (e) {
+            console.log("Telegram notify error:", e?.message || e);
+          }
 
           return res.json({
             message: "Order placed successfully ✅",
