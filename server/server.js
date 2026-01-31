@@ -14,6 +14,8 @@ const adminProductRoutes = require("./src/routes/adminProductRoutes");
 const productRoutes = require("./src/routes/productRoutes");
 
 const db = require("./src/config/db");
+const { notifyTelegram } = require("./src/utils/telegram");
+
 
 const app = express();
 
@@ -65,6 +67,15 @@ app.get("/", (req, res) => {
 app.get("/api/health", (req, res) => {
   res.json({ ok: true, time: new Date().toISOString() });
 });
+app.get("/api/test-telegram", async (req, res) => {
+  try {
+    await notifyTelegram("✅ Telegram test from backend working!");
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
 
 app.get("/api/db-ping", (req, res) => {
   db.getConnection((err, conn) => {
