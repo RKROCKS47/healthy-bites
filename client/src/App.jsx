@@ -33,7 +33,7 @@ function App() {
 
       <Footer />
        {/* ✅ Vercel Speed Insights (tracks all routes) */}
-      <SpeedInsights /
+      <SpeedInsights />
     </CartProvider>
   );
 }
