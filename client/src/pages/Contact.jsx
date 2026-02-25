@@ -2,7 +2,7 @@
 import Navbar from "../components/common/Navbar";
 
 export default function Contact() {
-  const phone = "+919284158390"; // change
+  const phone = "+917972803288"; // change
   const msg = encodeURIComponent(
     "Hi Healthy Bites! I want to order a salad 🥗. Please share today’s menu."
   );
@@ -24,7 +24,7 @@ export default function Contact() {
 
             <div style={{ display: "grid", gap: 8 }}>
               <div>
-                <strong>Phone:</strong> +91 92841 58390
+                <strong>Phone:</strong> +91 7972803288
               </div>
               <div>
                 <strong>Email:</strong> healthybites151@gmail.com
@@ -48,7 +48,7 @@ export default function Contact() {
 
               <a
                 className="btn"
-                href="tel:+91 92841 58390"
+                href="tel:+91 7972803288"
                 style={{ textAlign: "center" }}
               >
                 Call Now 📞
