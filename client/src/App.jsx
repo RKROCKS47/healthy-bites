@@ -12,11 +12,9 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 
-import { CartProvider } from "./context/CartContext";
-
 function App() {
   return (
-    <CartProvider>
+    <>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<Menu />} />
@@ -31,7 +29,7 @@ function App() {
       </Routes>
 
       <Footer />
-    </CartProvider>
+    </>
   );
 }
 

@@ -1,0 +1,267 @@
+diff --git a/.gitignore b/.gitignore
+index 83a96d2..0453ea2 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -3,3 +3,4 @@ node_modules/
+ dist/
+ build/
+ .DS_Store
++server/uploads/
+diff --git a/client/README.md b/client/README.md
+deleted file mode 100644
+index 18bc70e..0000000
+--- a/client/README.md
++++ /dev/null
+@@ -1,16 +0,0 @@
+-# React + Vite
+-
+-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+-
+-Currently, two official plugins are available:
+-
+-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+-
+-## React Compiler
+-
+-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+-
+-## Expanding the ESLint configuration
+-
+-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+diff --git a/client/public/vite.svg b/client/public/vite.svg
+deleted file mode 100644
+index e7b8dfb..0000000
+--- a/client/public/vite.svg
++++ /dev/null
+@@ -1 +0,0 @@
+-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+\ No newline at end of file
+diff --git a/client/src/App.jsx b/client/src/App.jsx
+index 6da4987..fec9acd 100644
+--- a/client/src/App.jsx
++++ b/client/src/App.jsx
+@@ -12,11 +12,9 @@ import AdminLogin from "./pages/admin/AdminLogin";
+ import AdminOrders from "./pages/admin/AdminOrders";
+ import AdminProducts from "./pages/admin/AdminProducts";
+ 
+-import { CartProvider } from "./context/CartContext";
+-
+ function App() {
+   return (
+-    <CartProvider>
++    <>
+       <Routes>
+         <Route path="/" element={<Home />} />
+         <Route path="/menu" element={<Menu />} />
+@@ -31,7 +29,7 @@ function App() {
+       </Routes>
+ 
+       <Footer />
+-    </CartProvider>
++    </>
+   );
+ }
+ 
+diff --git a/client/src/admin/AdminLayout.jsx b/client/src/admin/AdminLayout.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/admin/Dashboard.jsx b/client/src/admin/Dashboard.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/admin/Feedback.jsx b/client/src/admin/Feedback.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/admin/ManageOrders.jsx b/client/src/admin/ManageOrders.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/admin/ManageReels.jsx b/client/src/admin/ManageReels.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/admin/ManageSalads.jsx b/client/src/admin/ManageSalads.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/cart/CartItem.jsx b/client/src/components/cart/CartItem.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/cart/CartSummary.jsx b/client/src/components/cart/CartSummary.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/common/Button.jsx b/client/src/components/common/Button.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/common/Loader.jsx b/client/src/components/common/Loader.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/menu/CategoryFilter.jsx b/client/src/components/menu/CategoryFilter.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/menu/MenuSkeleton.jsx b/client/src/components/menu/MenuSkeleton.jsx
+deleted file mode 100644
+index 15567c6..0000000
+--- a/client/src/components/menu/MenuSkeleton.jsx
++++ /dev/null
+@@ -1,19 +0,0 @@
+-export default function MenuSkeleton() {
+-  return (
+-    <div className="card">
+-      <div className="skeleton skeleton-img" />
+-
+-      <div className="card-body">
+-        <div className="skeleton skeleton-text long" />
+-        <div className="skeleton skeleton-text short" />
+-
+-        <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+-          <div className="skeleton skeleton-text short" />
+-          <div className="skeleton skeleton-text short" />
+-        </div>
+-
+-        <div className="skeleton skeleton-btn" />
+-      </div>
+-    </div>
+-  );
+-}
+diff --git a/client/src/components/menu/QuantitySelector.jsx b/client/src/components/menu/QuantitySelector.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/menu/SaladCard.jsx b/client/src/components/menu/SaladCard.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/order/OrderStatusBadge.jsx b/client/src/components/order/OrderStatusBadge.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/order/OrderTracker.jsx b/client/src/components/order/OrderTracker.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/reels/ReelCard.jsx b/client/src/components/reels/ReelCard.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/reels/ReelsFeed.jsx b/client/src/components/reels/ReelsFeed.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/components/review/RatingStars.jsx b/client/src/components/review/RatingStars.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/context/AuthContext.jsx b/client/src/context/AuthContext.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/context/OrderContext.jsx b/client/src/context/OrderContext.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/hooks/useSocket.js b/client/src/hooks/useSocket.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/pages/Login.jsx b/client/src/pages/Login.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/pages/Register.jsx b/client/src/pages/Register.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/pages/SaladDetails.jsx b/client/src/pages/SaladDetails.jsx
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/services/api.js b/client/src/services/api.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/services/authService.js b/client/src/services/authService.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/services/orderService.js b/client/src/services/orderService.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/services/paymentService.js b/client/src/services/paymentService.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/services/reelsService.js b/client/src/services/reelsService.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/services/saladService.js b/client/src/services/saladService.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/styles/theme.css b/client/src/styles/theme.css
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/utils/constants.js b/client/src/utils/constants.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/src/utils/helpers.js b/client/src/utils/helpers.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/database/seed.sql b/database/seed.sql
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/docs/api.md b/docs/api.md
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/docs/notes.md b/docs/notes.md
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/app.js b/server/src/app.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/config/env.js b/server/src/config/env.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/config/socket.js b/server/src/config/socket.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/controllers/authController.js b/server/src/controllers/authController.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/controllers/orderController.js b/server/src/controllers/orderController.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/controllers/paymentController.js b/server/src/controllers/paymentController.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/controllers/reelsController.js b/server/src/controllers/reelsController.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/controllers/reviewController.js b/server/src/controllers/reviewController.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/controllers/saladController.js b/server/src/controllers/saladController.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/middlewares/authMiddleware.js b/server/src/middlewares/authMiddleware.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/middlewares/errorMiddleware.js b/server/src/middlewares/errorMiddleware.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/models/orderModel.js b/server/src/models/orderModel.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/models/reelsModel.js b/server/src/models/reelsModel.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/models/reviewModel.js b/server/src/models/reviewModel.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/models/saladModel.js b/server/src/models/saladModel.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/models/userModel.js b/server/src/models/userModel.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/routes/authRoutes.js b/server/src/routes/authRoutes.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/routes/paymentRoutes.js b/server/src/routes/paymentRoutes.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/routes/reelsRoutes.js b/server/src/routes/reelsRoutes.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/routes/saladRoutes.js b/server/src/routes/saladRoutes.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/utils/jwt.js b/server/src/utils/jwt.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/utils/otp.js b/server/src/utils/otp.js
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/server/src/utils/validators.js b/server/src/utils/validators.js
+deleted file mode 100644
+index e69de29..0000000
