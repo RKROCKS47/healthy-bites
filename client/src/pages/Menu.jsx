@@ -1,4 +1,5 @@
 import Navbar from "../components/common/Navbar";
+import useSeo from "../hooks/useSeo";
 import { useCart } from "../context/CartContext";
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../utils/apiBase";
@@ -31,6 +32,11 @@ function MenuSkeletonCard() {
 }
 
 export default function Menu() {
+  useSeo({
+    title: "Menu – Fresh Salads & Healthy Bowls",
+    description:
+      "Explore the Healthy Bites menu: fresh salads, healthy bowls and more. Order online for fast, fresh delivery.",
+  });
   // ✅ Use ONLY ONCE
   const { items, addToCart, updateQty, removeFromCart } = useCart();
 

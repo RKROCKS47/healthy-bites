@@ -1,0 +1,283 @@
+diff --git a/client/index.html b/client/index.html
+index f07b3d0..5a30ef9 100644
+--- a/client/index.html
++++ b/client/index.html
+@@ -2,9 +2,68 @@
+ <html lang="en">
+   <head>
+     <meta charset="UTF-8" />
+-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>client</title>
++
++    <!-- Primary SEO -->
++    <title>Healthy Bites | Fresh Salads & Healthy Food Delivered</title>
++    <meta
++      name="description"
++      content="Healthy Bites — Fresh Bites, Healthy Delights. Order fresh salads and healthy meals online for fast delivery. Eat clean, feel great."
++    />
++    <meta name="keywords" content="healthy food, fresh salads, salad delivery, healthy meals, order salad online, Healthy Bites" />
++    <meta name="author" content="Healthy Bites" />
++    <meta name="robots" content="index, follow" />
++    <link rel="canonical" href="https://healthy-bites-app.vercel.app/" />
++
++    <!-- Favicon & theme -->
++    <link rel="icon" type="image/png" href="/assets/logo/healthy-bites-logo.png" />
++    <link rel="apple-touch-icon" href="/assets/logo/healthy-bites-logo.png" />
++    <meta name="theme-color" content="#2ECC71" />
++
++    <!-- Open Graph / Facebook -->
++    <meta property="og:type" content="website" />
++    <meta property="og:site_name" content="Healthy Bites" />
++    <meta property="og:title" content="Healthy Bites | Fresh Salads & Healthy Food Delivered" />
++    <meta
++      property="og:description"
++      content="Fresh Bites, Healthy Delights. Order fresh salads and healthy meals online for fast delivery."
++    />
++    <meta property="og:url" content="https://healthy-bites-app.vercel.app/" />
++    <meta property="og:image" content="https://healthy-bites-app.vercel.app/assets/logo/healthy-bites-logo.png" />
++    <meta property="og:image:alt" content="Healthy Bites logo" />
++
++    <!-- Twitter -->
++    <meta name="twitter:card" content="summary_large_image" />
++    <meta name="twitter:title" content="Healthy Bites | Fresh Salads & Healthy Food Delivered" />
++    <meta
++      name="twitter:description"
++      content="Fresh Bites, Healthy Delights. Order fresh salads and healthy meals online for fast delivery."
++    />
++    <meta name="twitter:image" content="https://healthy-bites-app.vercel.app/assets/logo/healthy-bites-logo.png" />
++
++    <!-- Structured data -->
++    <script type="application/ld+json">
++      {
++        "@context": "https://schema.org",
++        "@type": "Restaurant",
++        "name": "Healthy Bites",
++        "slogan": "Fresh Bites, Healthy Delights",
++        "url": "https://healthy-bites-app.vercel.app/",
++        "logo": "https://healthy-bites-app.vercel.app/assets/logo/healthy-bites-logo.png",
++        "image": "https://healthy-bites-app.vercel.app/assets/images/hero-bg.png",
++        "servesCuisine": ["Healthy", "Salads", "Bowls"],
++        "priceRange": "$$",
++        "acceptsReservations": "False"
++      }
++    </script>
++    <script type="application/ld+json">
++      {
++        "@context": "https://schema.org",
++        "@type": "WebSite",
++        "name": "Healthy Bites",
++        "url": "https://healthy-bites-app.vercel.app/"
++      }
++    </script>
+   </head>
+   <body>
+     <div id="root"></div>
+diff --git a/client/public/index.html b/client/public/index.html
+deleted file mode 100644
+index e69de29..0000000
+diff --git a/client/public/robots.txt b/client/public/robots.txt
+new file mode 100644
+index 0000000..03970f5
+--- /dev/null
++++ b/client/public/robots.txt
+@@ -0,0 +1,8 @@
++User-agent: *
++Allow: /
++
++# Keep admin & API-ish routes out of the index
++Disallow: /admin
++Disallow: /admin/
++
++Sitemap: https://healthy-bites-app.vercel.app/sitemap.xml
+diff --git a/client/public/sitemap.xml b/client/public/sitemap.xml
+new file mode 100644
+index 0000000..9947982
+--- /dev/null
++++ b/client/public/sitemap.xml
+@@ -0,0 +1,33 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
++  <url>
++    <loc>https://healthy-bites-app.vercel.app/</loc>
++    <changefreq>weekly</changefreq>
++    <priority>1.0</priority>
++  </url>
++  <url>
++    <loc>https://healthy-bites-app.vercel.app/menu</loc>
++    <changefreq>weekly</changefreq>
++    <priority>0.9</priority>
++  </url>
++  <url>
++    <loc>https://healthy-bites-app.vercel.app/cart</loc>
++    <changefreq>monthly</changefreq>
++    <priority>0.5</priority>
++  </url>
++  <url>
++    <loc>https://healthy-bites-app.vercel.app/checkout</loc>
++    <changefreq>monthly</changefreq>
++    <priority>0.5</priority>
++  </url>
++  <url>
++    <loc>https://healthy-bites-app.vercel.app/track</loc>
++    <changefreq>monthly</changefreq>
++    <priority>0.5</priority>
++  </url>
++  <url>
++    <loc>https://healthy-bites-app.vercel.app/contact</loc>
++    <changefreq>monthly</changefreq>
++    <priority>0.6</priority>
++  </url>
++</urlset>
+diff --git a/client/src/hooks/useSeo.js b/client/src/hooks/useSeo.js
+new file mode 100644
+index 0000000..651c3bf
+--- /dev/null
++++ b/client/src/hooks/useSeo.js
+@@ -0,0 +1,25 @@
++import { useEffect } from "react";
++
++/**
++ * Lightweight per-page SEO for the SPA.
++ * Updates <title> and the meta description on route change
++ * (no extra dependency needed).
++ */
++export default function useSeo({ title, description } = {}) {
++  useEffect(() => {
++    if (title) {
++      document.title = `${title} | Healthy Bites`;
++    }
++    if (description) {
++      let meta = document.querySelector('meta[name="description"]');
++      if (!meta) {
++        meta = document.createElement("meta");
++        meta.setAttribute("name", "description");
++        document.head.appendChild(meta);
++      }
++      meta.setAttribute("content", description);
++    }
++    // Reset scroll position on navigation for a11y/UX
++    window.scrollTo(0, 0);
++  }, [title, description]);
++}
+diff --git a/client/src/pages/Cart.jsx b/client/src/pages/Cart.jsx
+index 9e51cb7..052d33b 100644
+--- a/client/src/pages/Cart.jsx
++++ b/client/src/pages/Cart.jsx
+@@ -1,9 +1,15 @@
+ import Navbar from "../components/common/Navbar";
++import useSeo from "../hooks/useSeo";
+ import { useCart } from "../context/CartContext";
+ import { useNavigate, Link } from "react-router-dom";
+ import { useEffect, useState } from "react";
+ 
+ export default function Cart() {
++  useSeo({
++    title: "Your Cart",
++    description:
++      "Review your Healthy Bites cart and proceed to checkout for fresh, healthy food delivered fast.",
++  });
+   // ✅ use ONLY these from context
+   const { items, totals, addToCart, updateQty, removeFromCart } = useCart();
+ 
+diff --git a/client/src/pages/Checkout.jsx b/client/src/pages/Checkout.jsx
+index 5181df9..81134b2 100644
+--- a/client/src/pages/Checkout.jsx
++++ b/client/src/pages/Checkout.jsx
+@@ -1,9 +1,15 @@
+ import Navbar from "../components/common/Navbar";
++import useSeo from "../hooks/useSeo";
+ import { useCart } from "../context/CartContext";
+ import { useEffect, useMemo, useState } from "react";
+ import { API_BASE } from "../utils/apiBase";
+ 
+ export default function Checkout() {
++  useSeo({
++    title: "Checkout",
++    description:
++      "Checkout securely with Healthy Bites and get fresh salads and healthy meals delivered to your door.",
++  });
+   const { items, totals, clearCart } = useCart();
+   const [placedOrderCode, setPlacedOrderCode] = useState("");
+ 
+diff --git a/client/src/pages/Contact.jsx b/client/src/pages/Contact.jsx
+index 39d670c..39f20f9 100644
+--- a/client/src/pages/Contact.jsx
++++ b/client/src/pages/Contact.jsx
+@@ -1,7 +1,13 @@
+ 
+ import Navbar from "../components/common/Navbar";
++import useSeo from "../hooks/useSeo";
+ 
+ export default function Contact() {
++  useSeo({
++    title: "Contact & Location",
++    description:
++      "Get in touch with Healthy Bites. Find our location, call or message us to order fresh, healthy food.",
++  });
+   const phone = "+917972803288"; // change
+   const msg = encodeURIComponent(
+     "Hi Healthy Bites! I want to order a salad 🥗. Please share today’s menu."
+diff --git a/client/src/pages/Home.jsx b/client/src/pages/Home.jsx
+index 152b2f8..0df8d7b 100644
+--- a/client/src/pages/Home.jsx
++++ b/client/src/pages/Home.jsx
+@@ -1,11 +1,17 @@
+ import Navbar from '../components/common/Navbar';
+ import '../styles/main.css';
+ import { useNavigate } from "react-router-dom";
++import useSeo from "../hooks/useSeo";
+ 
+ 
+ 
+ export default function Home() {
+     const navigate = useNavigate();
++    useSeo({
++        title: "Fresh Salads & Healthy Food Delivered",
++        description:
++            "Healthy Bites — Fresh Bites, Healthy Delights. Browse fresh salads and healthy meals, order online for fast delivery.",
++    });
+ 
+     return (
+         <>
+diff --git a/client/src/pages/Menu.jsx b/client/src/pages/Menu.jsx
+index 89e9406..110b71d 100644
+--- a/client/src/pages/Menu.jsx
++++ b/client/src/pages/Menu.jsx
+@@ -1,4 +1,5 @@
+ import Navbar from "../components/common/Navbar";
++import useSeo from "../hooks/useSeo";
+ import { useCart } from "../context/CartContext";
+ import { useEffect, useMemo, useState } from "react";
+ import { API_BASE } from "../utils/apiBase";
+@@ -31,6 +32,11 @@ function MenuSkeletonCard() {
+ }
+ 
+ export default function Menu() {
++  useSeo({
++    title: "Menu – Fresh Salads & Healthy Bowls",
++    description:
++      "Explore the Healthy Bites menu: fresh salads, healthy bowls and more. Order online for fast, fresh delivery.",
++  });
+   // ✅ Use ONLY ONCE
+   const { items, addToCart, updateQty, removeFromCart } = useCart();
+ 
+diff --git a/client/src/pages/TrackOrder.jsx b/client/src/pages/TrackOrder.jsx
+index 32516e0..9b9c267 100644
+--- a/client/src/pages/TrackOrder.jsx
++++ b/client/src/pages/TrackOrder.jsx
+@@ -2,8 +2,14 @@ import { useEffect, useState } from "react";
+ import { io } from "socket.io-client";
+ import { API_BASE } from "../utils/apiBase";
+ import Navbar from "../components/common/Navbar";
++import useSeo from "../hooks/useSeo";
+ 
+ export default function TrackOrder() {
++  useSeo({
++    title: "Track Your Order",
++    description:
++      "Track your Healthy Bites order live — from our kitchen to your doorstep.",
++  });
+   const [orderId, setOrderId] = useState("");
+   const [order, setOrder] = useState(null);
+   const [loading, setLoading] = useState(false);

@@ -1,11 +1,17 @@
 import Navbar from '../components/common/Navbar';
 import '../styles/main.css';
 import { useNavigate } from "react-router-dom";
+import useSeo from "../hooks/useSeo";
 
 
 
 export default function Home() {
     const navigate = useNavigate();
+    useSeo({
+        title: "Fresh Salads & Healthy Food Delivered",
+        description:
+            "Healthy Bites — Fresh Bites, Healthy Delights. Browse fresh salads and healthy meals, order online for fast delivery.",
+    });
 
     return (
         <>

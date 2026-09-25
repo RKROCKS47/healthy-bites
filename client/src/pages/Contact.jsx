@@ -1,7 +1,13 @@
 
 import Navbar from "../components/common/Navbar";
+import useSeo from "../hooks/useSeo";
 
 export default function Contact() {
+  useSeo({
+    title: "Contact & Location",
+    description:
+      "Get in touch with Healthy Bites. Find our location, call or message us to order fresh, healthy food.",
+  });
   const phone = "+917972803288"; // change
   const msg = encodeURIComponent(
     "Hi Healthy Bites! I want to order a salad 🥗. Please share today’s menu."

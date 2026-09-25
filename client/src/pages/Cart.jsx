@@ -1,9 +1,15 @@
 import Navbar from "../components/common/Navbar";
+import useSeo from "../hooks/useSeo";
 import { useCart } from "../context/CartContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 export default function Cart() {
+  useSeo({
+    title: "Your Cart",
+    description:
+      "Review your Healthy Bites cart and proceed to checkout for fresh, healthy food delivered fast.",
+  });
   // ✅ use ONLY these from context
   const { items, totals, addToCart, updateQty, removeFromCart } = useCart();
 

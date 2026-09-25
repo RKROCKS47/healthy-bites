@@ -1,9 +1,15 @@
 import Navbar from "../components/common/Navbar";
+import useSeo from "../hooks/useSeo";
 import { useCart } from "../context/CartContext";
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../utils/apiBase";
 
 export default function Checkout() {
+  useSeo({
+    title: "Checkout",
+    description:
+      "Checkout securely with Healthy Bites and get fresh salads and healthy meals delivered to your door.",
+  });
   const { items, totals, clearCart } = useCart();
   const [placedOrderCode, setPlacedOrderCode] = useState("");
 

@@ -2,8 +2,14 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { API_BASE } from "../utils/apiBase";
 import Navbar from "../components/common/Navbar";
+import useSeo from "../hooks/useSeo";
 
 export default function TrackOrder() {
+  useSeo({
+    title: "Track Your Order",
+    description:
+      "Track your Healthy Bites order live — from our kitchen to your doorstep.",
+  });
   const [orderId, setOrderId] = useState("");
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);

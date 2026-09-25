@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Keep admin & API-ish routes out of the index
+Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://healthy-bites-app.vercel.app/sitemap.xml
